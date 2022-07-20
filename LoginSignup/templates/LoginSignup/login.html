@@ -1,0 +1,33 @@
+{% extends 'LoginSignup/base.html' %}
+
+{% block content %}
+
+    
+    <div class="container-fluid w-100 h-100 p-5 col-md-4">
+            
+            <form class="row g-2 w-50 h-20 ml-4" method="post" action="{% url 'LoginSignup:login' %}">
+                <h4 style="margin-left: 8rem;">Login Pannel</h4>
+                {% csrf_token %}
+                <div class="col-md-7 m-5 mb-1">
+                    <label for="inputUsername" class="form-label" >Username / Email</label>
+                    {% if username %}
+                        <input required type="text" class="form-control input-sm" id="inputUsername" name="username" value="{{username}}">
+                    {% else %}
+                        <input required type="text" class="form-control input-sm" id="inputUsername" name="username" value="">
+                    {% endif %}
+                </div>
+                <div class="col-md-7 m-5 mt-4">
+                    <label for="inputPassword4" class="form-label" >Password</label>
+                    <input required type="password" class="form-control" id="inputPassword4" name="password">
+                </div> 
+                <div class="col-md-7 mt-0 mb-3">
+                    <button type="submit" class="btn btn-primary" style="width: 6rem; margin-left: 10rem;">Log In</button>
+                </div>
+                <div class="col-md-7 m-5 mt-0">
+                    <hr>
+                    <a href="{% url 'LoginSignup:signup' %}" style="margin-left: 2.8rem; margin-top: 2rem;">Don't have an account? Sign Up</a>
+                </div>
+            </form>
+    </div>
+
+{% endblock content %}

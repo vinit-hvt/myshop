@@ -1,0 +1,89 @@
+{% extends 'myshop/base.html' %}
+
+{% block content %}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+{% load static %}
+<script src="{% static 'CartUtilities.js' %}"></script>
+<script type="text/javascript">
+            
+    function viewProduct(productId){
+        url = "http://127.0.0.1:8000/myshop/viewProduct/" + productId;
+        window.open(url, target="_self");
+    }
+
+    initializeUtilities();
+
+</script>
+
+<div class="container-fluid w-100 h-100 p-5 col-md-4 mt-0">
+
+    <form class="row g-3 w-50 h-25"  method="post" action="{% url 'myshop:addProduct' %}" enctype="multipart/form-data">
+        <h4 style="margin-left: 12rem; margin-bottom: 0px;">Add Product</h4>
+        {% csrf_token %}
+        <div class="col-md-6">
+            <label for="inputProductName" class="form-label">Product Name</label>
+            {% if productName %}
+                <input required type="text" class="form-control" id="inputProductName" name="productName" value="{{productName}}">
+            {% else %}
+                <input required type="text" class="form-control input-sm" id="inputProductName" name="productName" value="">
+            {% endif %}
+        </div>
+        <div class="col-md-6">
+            <label for="inputCategory" class="form-label">Category</label>
+            <select id="inputCategory" class="form-select" name="productCategory">
+                <option selected value="Home and Appliances">Home and Appliances</option>
+                <option value="Foods and Beverages">Foods and Beverages</option>
+                <option value="Fashion and Clothings">Fashion and Clothings</option>
+                <option value="Fashion and Shoes">Fashion and Shoes</option>
+                <option value="Furnitures">Furnitures</option>
+                <option value="Beauty and Grooming">Beauty and Grooming</option>
+                <option value="Electronic Gadgets">Electronic Gadgets</option>
+                <option value="Electronics Appliances">Electronics Appliances</option>
+                <option value="Medical and Healthcare">Medical and Healthcare</option>
+                <option value="Sports and Equipments">Sports and Equipments</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label for="inputPrice" class="form-label">Unit Price(Rs)</label>
+            {% if productPrice %}
+                <input required type="number" class="form-control" id="inputPrice" name="productPrice" value="{{productPrice}}">
+            {% else %}
+                <input required type="number" class="form-control" id="inputPrice" name="productPrice">
+            {% endif %}
+        </div>
+        <div class="col-md-6">
+            <label for="inputWarranty" class="form-label">Warranty(in Months)</label>
+            {% if warranty %}
+                <input required type="number" class="form-control input-sm" id="inputWarranty" name="warranty" value="{{warranty}}">
+            {% else %}
+                <input required type="number" class="form-control input-sm" id="inputWarranty" name="warranty" value="">
+            {% endif %}
+        </div>
+        <div class="col-md-6">
+            <label for="description" class="form-label">Product Description</label>
+            {% if description %}
+                <textarea required class="form-control" style="width: 35.5rem;" name="description" id="description" rows="5">{{description}}</textarea>
+            {% else %}
+                <textarea required class="form-control" style="width: 35.5rem;" name="description" id="description" rows="5"></textarea>
+            {% endif %}
+        </div>
+        <div class="col-md-8">
+            <label for="productImage" class="form-label">Product Image</label>
+            <input required type="file" class="form-control" id="productImage" name="productImage">
+        </div>
+        <div class="col-12 mt-4">
+            <label for="manufacturerNameAddress" class="form-label">Manufacturer Name & Address</label>
+            {% if manufacturerNameAddress %}
+                <input required type="text" class="form-control input-sm" id="manufacturerNameAddress" name="manufacturerNameAddress" value="{{manufacturerNameAddress}}" placeholder="1234 Main St, city, state">
+            {% else %}
+                <input required type="text" class="form-control input-sm" id="manufacturerNameAddress" name="manufacturerNameAddress" value="" placeholder="XYZ Corporation, New Delhi, India">
+            {% endif %}
+        </div>
+        
+        <div class="col-md-5 mt-1">
+            <button type="submit" class="btn btn-primary" style="width: 8rem; margin-top: 2rem; margin-left: 12rem;">Add Product</button>
+        </div>
+    </form>
+</div>
+
+{% endblock content %}

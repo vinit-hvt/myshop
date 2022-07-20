@@ -1,0 +1,16 @@
+{% extends 'LoginSignup/base.html' %}
+
+{% block content %}
+
+    
+    <div class="container-fluid w-100 h-100 p-5 col-md-4">
+        
+        {% if username %}
+            <p>You are logged in as {{username}}</p>
+        {% else %}
+            <p>You are not logged in!!!</p>
+        {% endif %}
+
+    </div>
+
+{% endblock content %}

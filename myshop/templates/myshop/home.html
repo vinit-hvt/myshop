@@ -1,0 +1,105 @@
+<style>
+    .productBox{
+        display: flex; 
+        flex-direction: column; 
+        margin: 1rem 2rem;
+        width: 15rem; 
+        height: 19rem;
+        border-radius: 0.7rem;
+        box-shadow: 4px 3px 6px 3px rgb(211, 212, 212);
+        cursor: pointer;
+        transition: all 300ms ease;
+    }
+    
+    .productBox:hover{
+        box-shadow: 5px 6px 6px 3px rgb(184, 189, 189);
+    }
+
+    .rowContainer{
+        margin: 1rem; 
+        width: 97%; 
+        height: 82vh;
+        overflow-x: hidden;
+        overflow-y: auto;
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
+    }
+
+    /* Hide scrollbar for Chrome, Safari and Opera */
+    .rowContainer::-webkit-scrollbar {
+        display: none;
+    }
+
+    .viewMoreButton{
+        font-size: 12px;
+        text-decoration: none;
+        color: #1974fd;
+        border: 1px solid #1974fd;
+        background-color: white;
+        padding: 0.4rem;
+        margin-bottom: 0.5rem;
+        margin-right: 0.5rem;
+        border-radius: 0.4rem;
+    }
+
+    .viewMoreButton:hover{
+        background-color: whitesmoke;
+    }
+
+</style>
+
+{% extends 'myshop/base.html' %}
+
+{% block content %}
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+    {% load static %}
+    <script src="{% static 'CartUtilities.js' %}"></script>
+    <script type="text/javascript">
+                
+        function viewProduct(productId){
+            url = "http://127.0.0.1:8000/myshop/viewProduct/" + productId;
+            window.open(url, target="_self");
+        }
+
+        initializeUtilities();
+
+    </script>
+
+    
+    <div class="rowContainer">
+        
+        {% for category, products in allProducts.items %}
+            
+            <!-- Product Row Including Category -->
+            <div class="category-row" style="display: flex; flex-direction: column;">
+                
+                <h4 style="margin:0.3rem"> <a href="{% url 'myshop:viewProducts' category %}" class="hoverClass" style="text-decoration: none; color: rgb(37, 37, 37);">{{ category }}</a></h4>
+
+                <!-- Product Row -->
+                <div class="row-container" style="display: flex; flex-direction: row; margin: 0.3rem; margin-bottom: 0px;">
+
+                    {% for product in products %}
+                        
+                        <!-- Product Box -->
+                        <div class="productBox">
+
+                            <img src="{{ product.productImageUrl }}" alt="Product Image" width="160px" height="160px" style="border-radius: 0.4rem; margin: 0.5rem auto;" onclick="viewProduct('{{ product.productId }}')">
+
+                            <a href="#" style="margin: 0.3rem auto; margin-bottom: 0.1rem; font-weight: bold; text-decoration: none; color: black;">{{ product.productName }}</a>
+
+                            <p style="margin: 0px auto; font-weight: bold">Cost Rs {{ product.productPrice }}</p>
+                            {% if product.isInTheCart %}
+                                <a id="Product_{{ product.productId }}" onclick="removeFromCart('{{ product.productId }}')" class="btn btn-danger" style="margin: auto; width: 9rem; font-size: 13px;" >Remove from Cart</a>
+                            {% else %}
+                                <a id="Product_{{ product.productId }}" onclick="addToCart('{{ product.productId }}')" class="btn btn-primary" style="margin: auto; width: 9rem; font-size: 13px;" >Add to Cart</a>
+                            {% endif %}
+                        </div>
+
+                    {% endfor %}
+                </div>
+                <a href="{% url 'myshop:viewProducts' category %}" style="margin-left: auto;" class="viewMoreButton">View More</a>
+            </div>
+        {% endfor %}
+    </div>
+
+{% endblock content %}

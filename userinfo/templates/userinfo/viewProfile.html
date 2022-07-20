@@ -1,0 +1,154 @@
+<style>
+    
+    .outerContainer{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        margin: 0.5rem;
+        padding: 0.2rem 1rem;
+    }
+
+    .userDetailsContainer{
+
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        border-radius: 1rem;
+        box-shadow: 4px 3px 6px 6px rgb(211, 212, 212);
+        width: 46rem;
+        height: 26rem; 
+        padding-top: 0.5rem;
+        margin-top: 0.3rem;
+    }
+
+    .userDetailsForm{
+        margin-top: 0.5rem;
+    }
+
+    .inputTag{
+        padding: 2px 5px;
+        outline: none;
+        border: none;
+        border-bottom: 1px solid rgb(29, 28, 28);
+        transition: all 200ms ease;
+    }
+    
+    .inputTag:focus{
+        border-bottom: 1.5px solid rgb(28, 135, 236);;
+        border-radius: 0.3rem;
+    }
+
+    .OuterDivInput{
+        display: flex;
+        justify-content: space-between;
+        width: 28rem;
+        margin: 0.6rem;
+    }
+
+    .OuterDivInput_File{
+
+        width: 34.4rem;
+        margin: 0.7rem;
+    }
+
+    .menuButtonsDiv{
+        display: flex;
+        width: 50rem;
+        justify-content: space-around;
+        margin-bottom: 1rem;
+        padding: 0.2rem 5rem;
+    }
+
+    .menuButtons{
+        padding: 0.3rem 1rem;
+        color: white;
+        background-color: #1e6ce2;
+        cursor: pointer;
+        text-decoration: none;
+        border-radius: 0.3rem;
+    }
+
+    .menuButtons:hover{
+        background-color: #0b5ed7;
+        color: white;
+    }
+
+    .openedTab, .openedTab:hover{
+        color: #1e6ce2;
+        background-color: white;
+        border: 1px solid #1e6ce2;
+    }
+
+</style>
+
+{% extends 'myshop/base.html' %}
+
+{% block content %}
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+{% load static %}
+<script src="{% static 'CartUtilities.js' %}"></script>
+<script type="text/javascript">
+
+    initializeUtilities();
+
+</script>
+
+
+<div class="outerContainer">
+
+    <div class="menuButtonsDiv">
+        <a href="{% url 'userinfo:profile' %}" class="menuButtons openedTab">My Profile</a>
+        <a href="{% url 'userinfo:myAddress' %}" class="menuButtons">My Address(s)</a>
+        <a href="{% url 'userinfo:walletBalance' %}" class="menuButtons">Add Money</a>
+    </div>
+
+    <div class="userDetailsContainer">
+
+        <div class="userProfileImage">
+            <img src="{{ userDetails.userProfileImage.url }}" alt="User Profile Image" style="border-radius: 1.5rem;"  width="90px" height="90px">
+        </div>
+
+        <form class="userDetailsForm" method="post" action="{% url 'userinfo:profile' %}" enctype="multipart/form-data">
+
+            {% csrf_token %}
+            <div class="OuterDivInput">
+                <label for="username">Username</label>
+                <input readonly class="inputTag" type="text" id="username" name="username" value="{{ userDetails.username }}">
+            </div>
+
+            <div class="OuterDivInput">
+                <label for="fullName">Full Name</label>
+                <input class="inputTag" type="text" id="fullName" name="fullName" placeholder="Full Name" value="{{ userDetails.fullName }}">
+            </div>
+
+            <div class="OuterDivInput">
+                <label for="email">Email</label>
+                <input class="inputTag" type="email" id="email" name="email" placeholder="Email-Id" value="{{ userDetails.userEmail }}">
+            </div>
+
+            <div class="OuterDivInput">
+                <label for="contact">Contact</label>
+                <input class="inputTag" type="text" id="contact" name="contact" placeholder="Contact Number" value="{{ userDetails.contact }}">
+            </div>
+
+            <div class="OuterDivInput">
+                <label for="walletBalance">Wallet Balance</label>
+                <input readonly class="inputTag" type="text" name="walletBalance" id="walletBalance" value="Rs {{ userDetails.walletBalance }}">
+            </div>
+
+            <div class="OuterDivInput_File OuterDivInput">
+                <label for="userProfilePhoto">Select Profile</label>
+                <input type="file" name="userProfilePhoto" id="userProfilePhoto" style="margin-left: 1rem;">
+            </div>
+
+            <button type="submit" class="btn btn-primary mt-1">Update Profile</button>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock content %}

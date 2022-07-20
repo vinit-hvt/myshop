@@ -1,0 +1,193 @@
+<style>
+    .productBox{
+        display: flex; 
+        flex-direction: column; 
+        margin: 1rem 2rem;
+        width: 15rem; 
+        height: 19rem;
+        border-radius: 0.7rem;
+        box-shadow: 4px 3px 6px 3px rgb(211, 212, 212);
+        cursor: pointer;
+        transition: all 300ms ease;
+    }
+    
+    .productBox:hover{
+        box-shadow: 5px 6px 6px 3px rgb(184, 189, 189);
+    }
+
+    .rowContainer{
+        margin: 1rem; 
+        width: 98%; 
+        /* height: 60%; */
+        overflow-x: hidden;
+        overflow-y: auto;
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
+    }
+
+    /* Hide scrollbar for Chrome, Safari and Opera */
+    .rowContainer::-webkit-scrollbar {
+        display: none;
+    }
+
+    .viewMoreButton{
+        font-size: 12px;
+        text-decoration: none;
+        color: #1974fd;
+        border: 1px solid #1974fd;
+        background-color: white;
+        padding: 0.4rem;
+        margin-bottom: 0.5rem;
+        margin-right: 0.5rem;
+        border-radius: 0.4rem;
+    }
+
+    .viewMoreButton:hover{
+        background-color: whitesmoke;
+    }
+
+    .selectedProductContainer{
+        display: flex;
+        flex-direction: row;
+        margin: 1rem;
+        padding: 0.2rem;
+        justify-content: center;
+    }
+
+    .productContent{
+        display: flex;
+        flex-direction: column;
+        padding: 1rem;
+        margin: 0px 0.4rem;
+        width: 25rem;
+    }
+
+    .label{
+        margin: 2px 1rem;
+    }
+
+    .details{
+        margin: 2px 1.5rem;
+        margin-bottom: 10px;
+        font-size: 14px;
+    }
+
+    .productImageContainer{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .outerDiv{
+        display: flex;
+        padding: 0px 5rem;
+        box-shadow: 4px 3px 6px 6px rgb(211, 212, 212);
+        border-radius: 0.5rem;
+    }
+    
+
+</style>
+
+{% extends 'myshop/base.html' %}
+
+{% block content %}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+{% load static %}
+<script src="{% static 'CartUtilities.js' %}"></script>
+<script type="text/javascript">
+            
+    function viewProduct(productId){
+        url = "http://127.0.0.1:8000/myshop/viewProduct/" + productId;
+        window.open(url, target="_self");
+    }
+
+    initializeUtilities();
+
+</script>
+
+
+    <div class="selectedProductContainer" >
+
+        <div class="outerDiv">
+
+            <div class="productImageContainer" style="padding: 2rem 1rem;">
+                <img src="{{ selectedProduct.productImageUrl }}" alt="Product Image" style="width: 18rem; height: 18rem; border-radius: 0.5rem;">
+                <div style="text-align: center; margin-top: 1rem;">
+                    <h4>{{ selectedProduct.productName }}</h4>
+                    <h5>Rs {{ selectedProduct.productPrice }} Only</h5>
+                </div>
+            </div>
+            
+            <div class="productContent" >
+                
+                <h4 style="margin: 0.7rem auto;">Product Details</h4>
+                
+                <h6 class="label">Cost (Including all taxes.)</h6>
+                <p class="details" style="font-weight: bold;"> Rs. {{ selectedProduct.productPrice }}</p>
+                <h6 class="label">Manufacture Details : </h6>
+                <p class="details"> {{ selectedProduct.manufacturerDetails }}</p>
+                <h6 class="label">Warranty Period : </h6>
+                <p class="details">{{ selectedProduct.warrantInMonths }} Months</p>
+                
+                <div class="productDescription" style="margin-bottom: 0px; margin-left: 1rem;">
+                    <h6>Description :</h6>
+                    <ul>
+                        {% for description in selectedProductDescription %}
+                        <li style="margin: 0px;" >{{ description }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <!-- <a href="#" class="btn btn-primary" style="margin: auto; width: 9rem;" >Add to Cart</a> -->
+                {% if selectedProduct.isInTheCart %}
+                    <a id="Product_{{ selectedProduct.productId }}" onclick="removeFromCart('{{ selectedProduct.productId }}')" class="btn btn-danger" style="margin: auto; width: 9rem; font-size: 13px;" >Remove from Cart</a>
+                {% else %}
+                    <a id="Product_{{ selectedProduct.productId }}" onclick="addToCart('{{ selectedProduct.productId }}')" class="btn btn-primary" style="margin: auto; width: 9rem; font-size: 13px;" >Add to Cart</a>
+                {% endif %}
+            </div>
+            
+        </div>
+    </div>
+        
+        <div class="rowContainer">
+    
+            <!-- Product Row Including Category -->
+            <div class="category-row" style="display: flex; flex-direction: column;">
+                
+                <h4 style="margin:0.3rem"> <a href="{% url 'myshop:viewProducts' productCategory %}" class="hoverClass" style="text-decoration: none; color: rgb(37, 37, 37);">{{ productCategory }}</a></h4>
+
+                <!-- Product Row -->
+                <div class="row-container" style="display: flex; flex-wrap: wrap; flex-direction: row; margin: 0.3rem; margin-bottom: 0px;">
+
+                    {% for product in relatedProducts %}
+                        
+                        {% if product.productId != selectedProduct.productId %}
+                            <!-- Product Box -->
+                            <div class="productBox">
+
+                                <img src="{{ product.productImageUrl }}" alt="Product Image" width="160px" height="160px" style="border-radius: 0.4rem; margin: 0.5rem auto;" onclick="viewProduct('{{ product.productId }}')">
+
+                                <a href="#" style="margin: 0.3rem auto; margin-bottom: 0.1rem; font-weight: bold; text-decoration: none; color: black;">{{ product.productName }}</a>
+
+                                <p style="margin: 0px auto; font-weight: bold">Cost Rs {{ product.productPrice }}</p>
+
+                                {% if product.isInTheCart %}
+                                    <a id="Product_{{ product.productId }}" onclick="removeFromCart('{{ product.productId }}')" class="btn btn-danger" style="margin: auto; width: 9rem; font-size: 13px;" >Remove from Cart</a>
+                                {% else %}
+                                    <a id="Product_{{ product.productId }}" onclick="addToCart('{{ product.productId }}')" class="btn btn-primary" style="margin: auto; width: 9rem; font-size: 13px;" >Add to Cart</a>
+                                {% endif %}
+                                <!-- <a href="#" class="btn btn-primary" style="margin: auto; width: 9rem;" >Add to Cart</a> -->
+                            </div>
+
+                        {% endif %}
+
+                    {% endfor %}
+                    
+                </div>
+
+            </div>
+            
+    </div>
+
+
+{% endblock content %}

@@ -1,0 +1,97 @@
+{% extends 'LoginSignup/base.html' %}
+
+{% block content %}
+
+<div class="container-fluid w-100 h-100 p-5 col-md-4 mt-0">
+
+    <form class="row g-3 w-50 h-25"  method="post" action="{% url 'LoginSignup:signup' %}">
+        <h4 style="margin-left: 8rem; margin-bottom: 0px;">Signup Pannel</h4>
+        {% csrf_token %}
+        <div class="col-md-6">
+            <label for="inputUsername" class="form-label">Username</label>
+            {% if username %}
+                <input required type="text" class="form-control input-sm" id="inputUsername" name="username" value="{{username}}">
+            {% else %}
+                <input required type="text" class="form-control input-sm" id="inputUsername" name="username" value="">
+            {% endif %}
+            <!-- <input type="text" class="form-control input-sm" id="inputUsername"> -->
+        </div>
+        <div class="col-md-6">
+            <label for="inputPassword4" class="form-label">Password</label>
+            <input required type="password" class="form-control" id="inputPassword4" name="password" minlength="8">
+        </div>
+        <div class="col-md-6 mt-1">
+            <label for="inputEmail4" class="form-label">Email</label>
+            {% if email %}
+                <input required type="email" class="form-control input-sm" id="inputEmail4" name="email" value="{{email}}">
+            {% else %}
+                <input required type="email" class="form-control input-sm" id="inputEmail4" name="email" value="">
+            {% endif %}
+            <!-- <input type="email" class="form-control" id="inputEmail4"> -->
+        </div>
+        <div class="col-md-6 mt-1">
+            <label for="inputContact" class="form-label">Contact Number</label>
+            {% if contact %}
+                <input required type="text" class="form-control input-sm" id="inputContact" name="contact" value="{{contact}}">
+            {% else %}
+                <input required type="text" class="form-control input-sm" id="inputContact" name="contact" value="">
+            {% endif %}
+            <!-- <input type="number" class="form-control" id="inputContact"> -->
+        </div>
+        <div class="col-12 mt-1">
+            <label for="inputAddress" class="form-label">Address</label>
+            {% if address %}
+                <input required type="text" class="form-control input-sm" id="inputAddress" name="address" value="{{address}}" placeholder="1234 Main St">
+            {% else %}
+                <input required type="text" class="form-control input-sm" id="inputAddress" name="address" value="" placeholder="1234 Main St">
+            {% endif %}
+            <!-- <input type="text" class="form-control" id="inputAddress" > -->
+        </div>
+        <div class="col-md-6 mt-1">
+            <label for="inputCity" class="form-label">City</label>
+            {% if city %}
+                <input required type="text" class="form-control input-sm" id="inputCity" name="city" value="{{city}}">
+            {% else %}
+                <input required type="text" class="form-control input-sm" id="inputCity" name="city" value="">
+            {% endif %}
+            <!-- <input type="text" class="form-control" id="inputCity"> -->
+        </div>
+        <div class="col-md-6 mt-1">
+            <label for="inputState" class="form-label">State</label>
+            <select id="inputState" class="form-select" name="state">
+                <option selected value="Andhra Pradesh">Andhra Pradesh</option>
+                <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                <option value="Assam">Assam</option>
+                <option value="Goa">Goa</option>
+                <option value="Haryana">Haryana</option>
+                <option value="Gujarat">Gujarat</option>
+                <option value="Rajasthan">Rajasthan</option>
+                <option value="Madhya Pradesh">Madhya Pradesh</option>
+                <option value="Manipur">Manipur</option>
+                <option value="Mizoram">Mizoram</option>
+                <option value="Nagaland">Nagaland</option>
+                <option value="Punjab">Punjab</option>
+                <option value="Uttar Pradesh">Uttar Pradesh</option>
+                <option value="Tamil Nadu">Tamil Nadu</option>
+                <option value="Telangana">Telangana</option>
+                <option value="West Bengal">West Bengal</option>
+            </select>
+        </div>
+        <div class="col-md-4 mt-1">
+            <label for="inputZip" class="form-label">Zip</label>
+            {% if zipCode %}
+                <input required type="text" class="form-control input-sm" id="inputZip" name="zipCode" value="{{zipCode}}">
+            {% else %}
+                <input required type="text" class="form-control input-sm" id="inputZip" name="zipCode" value="">
+            {% endif %}
+        </div>
+        <div class="col-md-5 mt-1">
+            <button type="submit" class="btn btn-primary" style="width: 8rem; margin-top: 2rem; margin-left: 6rem;">Sign Up</button>
+        </div>
+        <div class="col-md-12 mt-4">
+            <a href="{% url 'LoginSignup:login' %}" style="margin-left: 8rem;">Already have an account? Log In</a>
+        </div>
+    </form>
+</div>
+
+{% endblock content %}

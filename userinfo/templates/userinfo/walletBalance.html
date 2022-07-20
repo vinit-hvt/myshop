@@ -1,0 +1,187 @@
+<style>
+    
+    .outerContainer{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        margin: 0.5rem;
+        padding: 0.2rem 1rem;
+    }
+
+    .userAddressContainer{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        border-radius: 1rem;
+        box-shadow: 4px 3px 6px 6px rgb(211, 212, 212);
+        width: 46rem;
+        height: 26rem; 
+        padding-top: 0.5rem;
+        margin-top: 0.3rem;
+    }
+
+
+    .menuButtonsDiv{
+        display: flex;
+        width: 50rem;
+        justify-content: space-around;
+        margin-bottom: 1rem;
+        padding: 0.2rem 5rem;
+    }
+
+    .menuButtons{
+        padding: 0.3rem 1rem;
+        color: white;
+        background-color: #1e6ce2;
+        cursor: pointer;
+        text-decoration: none;
+        border-radius: 0.3rem;
+    }
+
+    .menuButtons:hover{
+        background-color: #0b5ed7;
+        color: white;
+    }
+
+    .userDetailsForm{
+        margin: auto;
+    }
+
+    .inputTag{
+        padding: 2px 5px;
+        outline: none;
+        border: none;
+        border-bottom: 1px solid rgb(29, 28, 28);
+        transition: all 200ms ease;
+    }
+    
+    .inputTag:focus{
+        border-bottom: 1.5px solid rgb(28, 135, 236);;
+        border-radius: 0.3rem;
+    }
+
+    .inputTagDropdown{
+        width: 12rem;
+    }
+
+    .OuterDivInput{
+        display: flex;
+        justify-content: space-between;
+        width: 28rem;
+        margin: 1rem;
+    }
+
+    .contentContainer{
+        padding: 1rem;
+        padding-top: 1rem;
+        margin: auto;
+    }
+
+    .addAddressButton{
+        padding: 0.2rem 0.7rem;
+        color: #1e6ce2;
+        background-color: white;
+        border: 1px solid #1e6ce2;
+        cursor: pointer;
+        text-decoration: none;
+        border-radius: 0.3rem;
+        font-size: 14px;
+    }
+
+    .addAddressButton:hover{
+        background-color: whitesmoke;
+    }
+
+    .openedTab, .openedTab:hover{
+        color: #1e6ce2;
+        background-color: white;
+        border: 1px solid #1e6ce2;
+    }
+
+</style>
+
+{% extends 'myshop/base.html' %}
+
+{% block content %}
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+{% load static %}
+<script src="{% static 'CartUtilities.js' %}"></script>
+<script type="text/javascript">
+
+    initializeUtilities();
+</script>
+
+
+<div class="outerContainer">
+
+    <div class="menuButtonsDiv">
+        <a href="{% url 'userinfo:profile' %}" class="menuButtons">My Profile</a>
+        <a href="{% url 'userinfo:myAddress' %}" class="menuButtons">My Address(s)</a>
+        <a href="{% url 'userinfo:walletBalance' %}" class="menuButtons openedTab">Add Money</a>
+    </div>
+
+    <div class="userAddressContainer">
+        <div class="contentContainer">
+            
+            <div style="text-align: center; margin-bottom: 1rem;"><h5>Add Money to Wallet</h5></div>
+            <form class="userDetailsForm" method="post" action="{% url 'userinfo:walletBalance' %}">
+
+                {% csrf_token %}
+                <div class="OuterDivInput">
+                    <label for="cardNumber">Card Number</label>
+                    {% if cardNumber %}
+                        <input required show="*" class="inputTag" type="text" id="cardNumber" name="cardNumber" placeholder="Valid Card Number" value="{{ cardNumber }}">
+                    {% else %}
+                        <input required class="inputTag" type="text" id="cardNumber" name="cardNumber" placeholder="Valid Card Number" value="">
+                    {% endif %}
+                </div>
+    
+                <div class="OuterDivInput">
+                    <label for="ownerName">Owner Name</label>
+                    {% if ownerName %}
+                        <input required class="inputTag" type="text" id="ownerName" name="ownerName" placeholder="Card Owner Name" value="{{ ownerName }}">
+                    {% else %}
+                        <input required class="inputTag" type="text" id="ownerName" name="ownerName" placeholder="Card Owner Name" value="">
+                    {% endif %}
+                </div>
+
+                <div class="OuterDivInput">
+                    <label for="cvvCode">CVV Code</label>
+                    {% if cvvCode %}
+                        <input required class="inputTag" type="text" id="cvvCode" name="cvvCode" placeholder="CVV Code" value="{{ cvvCode }}">
+                    {% else %}
+                        <input required class="inputTag" type="text" id="cvvCode" name="cvvCode" placeholder="CVV Code" value="">
+                    {% endif %}
+                </div>
+
+                <div class="OuterDivInput">
+                    <label for="expiryDate">Expiry Date</label>
+                    {% if expiryDate %}
+                        <input required class="inputTag" type="datetime-local" id="expiryDate" name="expiryDate" value="{{ expiryDate }}">
+                    {% else %}
+                        <input required class="inputTag" type="datetime-local" id="expiryDate" name="expiryDate" value="">
+                    {% endif %}
+                </div>
+
+                <div class="OuterDivInput">
+                    <label for="amount">Enter Amount</label>
+                    {% if amount %}
+                        <input required class="inputTag" type="number" step="0.01" min="0" id="amount" name="amount" placeholder="Enter Amount" value="{{ amount }}">
+                    {% else %}
+                        <input required class="inputTag" type="number" step="0.01" min="0" id="amount" name="amount" placeholder="Enter Amount" value="">
+                    {% endif %}
+                </div>
+
+                <div style="display: flex; justify-content: center; margin-top: 1.8rem;">
+                    <button type="submit" class="addAddressButton">Submit</button>
+                </div>
+    
+            </form>
+        </div>
+    </div>
+
+</div>
+
+{% endblock content %}
