@@ -5,7 +5,7 @@ from django.shortcuts import render, get_object_or_404
 from django.views import View
 from django.urls import reverse
 from LoginSignup.models import Address
-from .models import Products, Users, Cart, Orders
+from .models import Products, Users, Cart, Orders, ProductTags
 from django.contrib import messages
 from django.db.models import Q, F
 from .utils import isProductInTheCart
@@ -61,6 +61,14 @@ class AddProduct(View):
                 productImage = request.FILES['productImage']
             )
             newProduct.save()
+            for tag in request.POST['productTags'].split(','):
+                tag = tag.lower().strip()
+                if tag != "":
+                    productTag, created = ProductTags.objects.get_or_create(tagName=tag, defaults={
+                        "tagName":tag
+                    })
+                    newProduct.tags.add(productTag)
+
             messages.success(request, "Product Added Successfully !!!")
             productInfo = {}
         
@@ -73,7 +81,8 @@ class ViewProducts(View):
 
     def get(self, request, searchKey):
         searchKey = "" if searchKey.lower() == "all" else searchKey
-        queryResult = Products.objects.filter(Q(productName__icontains = searchKey) | Q(productCategory__icontains = searchKey))
+        queryResult = Products.objects.filter(Q(productName__icontains = searchKey) | Q(productCategory__icontains = searchKey) | Q(tags__tagName__contains = searchKey)).distinct()
+        
         allProducts = {}
         for product in queryResult.values():
             product['productImageUrl'] = Products.objects.get(pk=product['productId']).productImage.url
@@ -91,7 +100,7 @@ class SearchProducts(View):
 
     def get(self, request):
         searchKey = "" if request.GET['searchKey'].lower() == "all" else request.GET['searchKey']
-        queryResult = Products.objects.filter(Q(productName__icontains = searchKey) | Q(productCategory__icontains = searchKey))
+        queryResult = Products.objects.filter(Q(productName__icontains = searchKey) | Q(productCategory__icontains = searchKey) | Q(tags__tagName__icontains = searchKey)).distinct()
         allProducts = {}
         for product in queryResult.values():
             product['productImageUrl'] = Products.objects.get(pk=product['productId']).productImage.url

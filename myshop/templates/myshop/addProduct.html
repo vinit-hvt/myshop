@@ -74,9 +74,18 @@
         <div class="col-12 mt-4">
             <label for="manufacturerNameAddress" class="form-label">Manufacturer Name & Address</label>
             {% if manufacturerNameAddress %}
-                <input required type="text" class="form-control input-sm" id="manufacturerNameAddress" name="manufacturerNameAddress" value="{{manufacturerNameAddress}}" placeholder="1234 Main St, city, state">
+                <input required type="text" class="form-control input-sm" id="manufacturerNameAddress" name="manufacturerNameAddress" value="{{manufacturerNameAddress}}" placeholder="XYZ Corporation, New Delhi, India">
             {% else %}
                 <input required type="text" class="form-control input-sm" id="manufacturerNameAddress" name="manufacturerNameAddress" value="" placeholder="XYZ Corporation, New Delhi, India">
+            {% endif %}
+        </div>
+
+        <div class="col-12 mt-4">
+            <label for="productTags" class="form-label">Product Tags (Seperated by Comma)</label>
+            {% if productTags %}
+                <input type="text" class="form-control input-sm" id="productTags" name="productTags" value="{{productTags}}" placeholder="Example : sports,cricket,sports equipments">
+            {% else %}
+                <input type="text" class="form-control input-sm" id="productTags" name="productTags" value="" placeholder="Example : sports,cricket,sports equipments">
             {% endif %}
         </div>
         

@@ -4,12 +4,18 @@ from LoginSignup.models import Address, Users
 from datetime import datetime, timedelta
 
 
-
 def getDeliveryDate():
     return (datetime.now() + timedelta(days=5))
 
 
 # Create your models here.
+
+
+class ProductTags(models.Model):
+    tagName = models.CharField(max_length=40, null=False, primary_key=True)
+    def __repr__(self) -> str:
+        return f"Tag Name : {self.tagName}"
+
 
 class Products(models.Model):
     productId = models.BigAutoField(primary_key=True)
@@ -21,13 +27,14 @@ class Products(models.Model):
     productDescription = models.TextField(null=False)
     productImage = models.ImageField(null=False, blank=False, upload_to="ProductImages/")
     seller = models.ForeignKey(Users, on_delete=models.CASCADE)
+    tags = models.ManyToManyField(ProductTags, null=True)
 
     def __repr__(self) -> str:
         return f"{self.productName} costs Rs {self.productPrice}"
 
 
-class Orders(models.Model):
 
+class Orders(models.Model):
     orderId = models.BigAutoField(primary_key=True)
     orderedOn = models.DateTimeField(default=datetime.now)
     totalBillAmount = models.FloatField(null = False)
@@ -36,7 +43,8 @@ class Orders(models.Model):
     isOrderDelivered = models.BooleanField(default=False)
     estimatedDeliveryDate = models.DateTimeField(default=getDeliveryDate)
 
-
+    def __repr__(self) -> str:
+        return f"Order Id : {self.orderId}, Order of User : {self.user__username} on {self.orderedOn}"
 
 
 class Cart(models.Model):
