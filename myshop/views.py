@@ -17,18 +17,18 @@ from .utils import isProductInTheCart
 class Home(View):
 
     def get(self, request):
-        print("This is home")
         allProducts = {}
         maxLength = 4
-        for product in Products.objects.all().values():
+        for product in Products.objects.all().order_by('productCategory', '-recommendationAmount').values():
             product['productImageUrl'] = Products.objects.get(pk=product['productId']).productImage.url
             product['isInTheCart'] = isProductInTheCart(productId=product['productId'], username=request.COOKIES['username'])
             if product['productCategory'] in  allProducts:
-                if len(allProducts[product['productCategory']]) < maxLength:
-                    allProducts[product['productCategory']].append(product)
+                if allProducts[product['productCategory']][0] < maxLength:
+                    allProducts[product['productCategory']][1].append(product)
+                    allProducts[product['productCategory']][0] += 1
             else:
-                allProducts[product['productCategory']] = [product]
-        
+                allProducts[product['productCategory']] = [1,[product]]
+
         return render(request, 'myshop/home.html', context={'allProducts':allProducts})
 
 
@@ -58,7 +58,9 @@ class AddProduct(View):
                 productDescription = productInfo['description'],
                 manufacturerDetails = productInfo['manufacturerNameAddress'],
                 seller = Users.objects.get(username=request.COOKIES['username']),
-                productImage = request.FILES['productImage']
+                productImage = request.FILES['productImage'],
+                isRecommended = True if 'isRecommended' in request.POST else False,
+                recommendationAmount = float(request.POST['recommendationCharges']) if 'isRecommended' in request.POST else 0
             )
             newProduct.save()
             for tag in request.POST['productTags'].split(','):
@@ -81,7 +83,7 @@ class ViewProducts(View):
 
     def get(self, request, searchKey):
         searchKey = "" if searchKey.lower() == "all" else searchKey
-        queryResult = Products.objects.filter(Q(productName__icontains = searchKey) | Q(productCategory__icontains = searchKey) | Q(tags__tagName__contains = searchKey)).distinct()
+        queryResult = Products.objects.filter(Q(productName__icontains = searchKey) | Q(productCategory__icontains = searchKey) | Q(tags__tagName__contains = searchKey)).distinct().order_by('-recommendationAmount')
         
         allProducts = {}
         for product in queryResult.values():
@@ -100,7 +102,7 @@ class SearchProducts(View):
 
     def get(self, request):
         searchKey = "" if request.GET['searchKey'].lower() == "all" else request.GET['searchKey']
-        queryResult = Products.objects.filter(Q(productName__icontains = searchKey) | Q(productCategory__icontains = searchKey) | Q(tags__tagName__icontains = searchKey)).distinct()
+        queryResult = Products.objects.filter(Q(productName__icontains = searchKey) | Q(productCategory__icontains = searchKey) | Q(tags__tagName__icontains = searchKey)).distinct().order_by('-recommendationAmount')
         allProducts = {}
         for product in queryResult.values():
             product['productImageUrl'] = Products.objects.get(pk=product['productId']).productImage.url
@@ -124,14 +126,12 @@ class ViewProduct(View):
         selectedProductDescription = list(map(lambda string: string.replace('\r', ''), selectedProduct['productDescription'].split('\n')))
 
         relatedProducts = list()
-        for product in Products.objects.filter(productCategory = selectedProduct['productCategory']).values():
+        for product in Products.objects.filter(productCategory = selectedProduct['productCategory']).order_by('-recommendationAmount').values():
             product['productImageUrl'] = Products.objects.get(pk=product['productId']).productImage.url
             product['isInTheCart'] = isProductInTheCart(productId=product['productId'], username=request.COOKIES['username'])
             relatedProducts.append(product)
 
         productCategory = selectedProduct['productCategory']
-        # print(relatedProducts)
-        # print(selectedProductDescription)
         return render(request, 'myshop/viewProduct.html', context={
             'selectedProduct' : selectedProduct,
             'relatedProducts' : relatedProducts,

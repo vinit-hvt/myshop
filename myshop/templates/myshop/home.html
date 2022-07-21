@@ -4,7 +4,7 @@
         flex-direction: column; 
         margin: 1rem 2rem;
         width: 15rem; 
-        height: 19rem;
+        height: 19.5rem;
         border-radius: 0.7rem;
         box-shadow: 4px 3px 6px 3px rgb(211, 212, 212);
         cursor: pointer;
@@ -68,7 +68,7 @@
     
     <div class="rowContainer">
         
-        {% for category, products in allProducts.items %}
+        {% for category, content in allProducts.items %}
             
             <!-- Product Row Including Category -->
             <div class="category-row" style="display: flex; flex-direction: column;">
@@ -78,12 +78,17 @@
                 <!-- Product Row -->
                 <div class="row-container" style="display: flex; flex-direction: row; margin: 0.3rem; margin-bottom: 0px;">
 
-                    {% for product in products %}
+                    {% for product in content.1 %}
                         
                         <!-- Product Box -->
                         <div class="productBox">
+                            {% if product.isRecommended %}
+                                <p style="color: orange; font-size: 12px; margin: auto; margin-bottom: 0px;"><strong>Recommended ✓</strong></p>
+                                <img src="{{ product.productImageUrl }}" alt="Product Image" width="160px" height="160px" style="border-radius: 0.4rem; margin: 0.5rem auto;" onclick="viewProduct('{{ product.productId }}')">
+                            {% else %}
+                                <img src="{{ product.productImageUrl }}" alt="Product Image" width="160px" height="160px" style="border-radius: 0.4rem; margin: 1rem auto;" onclick="viewProduct('{{ product.productId }}')">
+                            {% endif %}
 
-                            <img src="{{ product.productImageUrl }}" alt="Product Image" width="160px" height="160px" style="border-radius: 0.4rem; margin: 0.5rem auto;" onclick="viewProduct('{{ product.productId }}')">
 
                             <a href="#" style="margin: 0.3rem auto; margin-bottom: 0.1rem; font-weight: bold; text-decoration: none; color: black;">{{ product.productName }}</a>
 
@@ -97,7 +102,10 @@
 
                     {% endfor %}
                 </div>
-                <a href="{% url 'myshop:viewProducts' category %}" style="margin-left: auto;" class="viewMoreButton">View More</a>
+                
+                {% if content.0 == 4 %}
+                    <a href="{% url 'myshop:viewProducts' category %}" style="margin-left: auto;" class="viewMoreButton">View More</a>
+                {% endif %}
             </div>
         {% endfor %}
     </div>

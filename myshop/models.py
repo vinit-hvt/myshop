@@ -28,6 +28,9 @@ class Products(models.Model):
     productImage = models.ImageField(null=False, blank=False, upload_to="ProductImages/")
     seller = models.ForeignKey(Users, on_delete=models.CASCADE)
     tags = models.ManyToManyField(ProductTags, null=True)
+    isRecommended = models.BooleanField(default=False)
+    recommendationAmount = models.FloatField(default=0)
+
 
     def __repr__(self) -> str:
         return f"{self.productName} costs Rs {self.productPrice}"
