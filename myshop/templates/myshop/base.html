@@ -58,11 +58,14 @@
         {% for message in messages %}
             {% if message.tags == 'error' %}
                 <div class="alert alert-danger mb-0" role="alert">
-                    {{message}}
+                    <span>{{ message }}</span>
+                    {% if request.session.helper %}
+                        <a href="{{ request.session.helper }}" class="btn btn-primary btn-sm ml-3">{{ request.session.helperName }}</a>
+                    {% endif %}
                 </div>
             {% else %}
                 <div class="alert alert-{{ message.tags }} mb-0" role="alert">
-                    {{message}}
+                    <span>{{ message }}</span>
                 </div>
             {% endif %}
         {% endfor %}

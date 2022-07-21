@@ -238,10 +238,13 @@ class PlaceOrder(View):
 
     def post(self, request):
 
+        del request.session['helper'], request.session['helperName']
         user = Users.objects.get(pk=request.COOKIES['username'])
         totalBillAmount = float(request.POST['totalBillAmount'])
         if totalBillAmount > user.walletBalance:
             messages.error(request, "Insufficient Wallet Balance.")
+            request.session['helper'] = reverse('userinfo:walletBalance')
+            request.session['helperName'] = "Add Money"
         elif request.POST['address'].lower() == "defaulttext" or len(Address.objects.filter(pk=request.POST['address'])) == 0:
             messages.error(request, "Please select the delivery address.")
         else:
