@@ -47,7 +47,11 @@
                         </li>
                     </ul>
                     <form class="d-flex" role="search" method="get" action="{% url 'myshop:searchProducts' %}">
-                        <input class="form-control me-3" type="search" placeholder="Search Products" name="searchKey" aria-label="Search" id="searchKey">
+                        {% if searchKey %}
+                            <input class="form-control me-3" type="search" placeholder="Search Products" name="searchKey" aria-label="Search" id="searchKey" value="{{ searchKey }}">
+                        {% else %}
+                            <input class="form-control me-3" type="search" placeholder="Search Products" name="searchKey" aria-label="Search" id="searchKey">
+                        {% endif %}
                         <button class="btn btn-outline-secondary me-3 text-light" id="search" type="submit">Search</button>
                     </form>
                 </div>

@@ -8,7 +8,7 @@ from LoginSignup.models import Address
 from .models import Products, Users, Cart, Orders, ProductTags
 from django.contrib import messages
 from django.db.models import Q, F
-from .utils import isProductInTheCart
+from .utils import isProductInTheCart, searchProductWithKeyword, getProductsCategoryWise
 
 
 # Create your views here.
@@ -66,10 +66,18 @@ class AddProduct(View):
             for tag in request.POST['productTags'].split(','):
                 tag = tag.lower().strip()
                 if tag != "":
-                    productTag, created = ProductTags.objects.get_or_create(tagName=tag, defaults={
-                        "tagName":tag
-                    })
+                    productTag, created = ProductTags.objects.get_or_create(tagName=tag, defaults={"tagName":tag})
                     newProduct.tags.add(productTag)
+            
+            # Making product name as a tag #
+            for tag in productInfo['productName'].split(' '):
+                productTag, created = ProductTags.objects.get_or_create(tagName=tag, defaults={"tagName":tag})
+                newProduct.tags.add(productTag)
+            
+            # Making product category as a tag #
+            for tag in productInfo['productCategory'].split(' '):
+                productTag, created = ProductTags.objects.get_or_create(tagName=tag, defaults={"tagName":tag})
+                newProduct.tags.add(productTag)
 
             messages.success(request, "Product Added Successfully !!!")
             productInfo = {}
@@ -82,37 +90,16 @@ class AddProduct(View):
 class ViewProducts(View):
 
     def get(self, request, searchKey):
-        searchKey = "" if searchKey.lower() == "all" else searchKey
-        queryResult = Products.objects.filter(Q(productName__icontains = searchKey) | Q(productCategory__icontains = searchKey) | Q(tags__tagName__contains = searchKey)).distinct().order_by('-recommendationAmount')
-        
-        allProducts = {}
-        for product in queryResult.values():
-            product['productImageUrl'] = Products.objects.get(pk=product['productId']).productImage.url
-            product['isInTheCart'] = isProductInTheCart(productId=product['productId'], username=request.COOKIES['username'])
-            if product['productCategory'] in  allProducts:
-                allProducts[product['productCategory']].append(product)
-            else:
-                allProducts[product['productCategory']] = [product]
-        
-        return render(request, 'myshop/viewProducts.html', context={'allProducts':allProducts})
+        allProducts = getProductsCategoryWise(searchKey, request.COOKIES['username'])
+        return render(request, 'myshop/viewProducts.html', context={'allProducts':allProducts, 'resultLen':len(allProducts)})
 
 
 
 class SearchProducts(View):
 
     def get(self, request):
-        searchKey = "" if request.GET['searchKey'].lower() == "all" else request.GET['searchKey']
-        queryResult = Products.objects.filter(Q(productName__icontains = searchKey) | Q(productCategory__icontains = searchKey) | Q(tags__tagName__icontains = searchKey)).distinct().order_by('-recommendationAmount')
-        allProducts = {}
-        for product in queryResult.values():
-            product['productImageUrl'] = Products.objects.get(pk=product['productId']).productImage.url
-            product['isInTheCart'] = isProductInTheCart(productId=product['productId'], username=request.COOKIES['username'])
-            if product['productCategory'] in  allProducts:
-                allProducts[product['productCategory']].append(product)
-            else:
-                allProducts[product['productCategory']] = [product]
-        
-        return render(request, 'myshop/viewProducts.html', context={'allProducts':allProducts})
+        allProducts = searchProductWithKeyword(request.GET['searchKey'], request.COOKIES['username'])
+        return render(request, 'myshop/viewProducts.html', context={'allProducts':allProducts, 'resultLen':len(allProducts), 'searchKey':request.GET['searchKey']})
 
 
 

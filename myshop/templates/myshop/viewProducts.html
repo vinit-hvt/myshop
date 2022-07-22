@@ -67,48 +67,55 @@
 
     
     <div class="rowContainer">
-        
-        {% for category, products in allProducts.items %}
-            
-            <!-- Product Row Including Category -->
-            <div class="category-row" style="display: flex; flex-direction: column;">
-                
-                <h4 style="margin:0.3rem"> <a href="{% url 'myshop:viewProducts' category %}" class="hoverClass" style="text-decoration: none; color: rgb(37, 37, 37);">{{ category }}</a></h4>
 
-                <!-- Product Row -->
-                <div class="row-container" style="display: flex; flex-wrap: wrap; flex-direction: row; margin: 0.3rem; margin-bottom: 0px;">
-
-                    {% for product in products %}
-                        
-                        <!-- Product Box -->
-                        <div class="productBox">
-                            {% if product.isRecommended %}
-                                <p style="color: orange; font-size: 12px; margin: auto; margin-bottom: 0px;"><strong>Recommended ✓</strong></p>
-                                <img src="{{ product.productImageUrl }}" alt="Product Image" width="160px" height="160px" style="border-radius: 0.4rem; margin: 0.5rem auto;" onclick="viewProduct('{{ product.productId }}')">
-                            {% else %}
-                                <img src="{{ product.productImageUrl }}" alt="Product Image" width="160px" height="160px" style="border-radius: 0.4rem; margin: 1rem auto;" onclick="viewProduct('{{ product.productId }}')">
-                            {% endif %}
-
-
-                            <a href="#" style="margin: 0.3rem auto; margin-bottom: 0.1rem; font-weight: bold; text-decoration: none; color: black;">{{ product.productName }}</a>
-
-                            <p style="margin: 0px auto; font-weight: bold">Cost Rs {{ product.productPrice }}</p>
-                            {% if product.isInTheCart %}
-                                <a id="Product_{{ product.productId }}" onclick="removeFromCart('{{ product.productId }}')" class="btn btn-danger" style="margin: auto; width: 9rem; font-size: 13px;" >Remove from Cart</a>
-                            {% else %}
-                                <a id="Product_{{ product.productId }}" onclick="addToCart('{{ product.productId }}')" class="btn btn-primary" style="margin: auto; width: 9rem; font-size: 13px;" >Add to Cart</a>
-                            {% endif %}
-                            <!-- <a href="#" class="btn btn-primary" style="margin: auto; width: 9rem;" >Add to Cart</a> -->
-
-                            
-                        </div>
-
-                    {% endfor %}
-                    
-                </div>
-
+        {% if resultLen == 0 %}
+            <div style="display: flex; justify-content: center;">
+                <img src="https://stores.lifestylestores.com/VendorpageTheme/Enterprise/EThemeForLifestyleUpdated/images/product-not-found.jpg" alt="No Product Found.">
             </div>
-        {% endfor %}
+        {% else %}
+        
+            {% for category, products in allProducts.items %}
+                
+                <!-- Product Row Including Category -->
+                <div class="category-row" style="display: flex; flex-direction: column;">
+                    
+                    <h4 style="margin:0.3rem"> <a href="{% url 'myshop:viewProducts' category %}" class="hoverClass" style="text-decoration: none; color: rgb(37, 37, 37);">{{ category }}</a></h4>
+
+                    <!-- Product Row -->
+                    <div class="row-container" style="display: flex; flex-wrap: wrap; flex-direction: row; margin: 0.3rem; margin-bottom: 0px;">
+
+                        {% for product in products %}
+                            
+                            <!-- Product Box -->
+                            <div class="productBox">
+                                {% if product.isRecommended %}
+                                    <p style="color: orange; font-size: 12px; margin: auto; margin-bottom: 0px;"><strong>Recommended ✓</strong></p>
+                                    <img src="{{ product.productImageUrl }}" alt="Product Image" width="160px" height="160px" style="border-radius: 0.4rem; margin: 0.5rem auto;" onclick="viewProduct('{{ product.productId }}')">
+                                {% else %}
+                                    <img src="{{ product.productImageUrl }}" alt="Product Image" width="160px" height="160px" style="border-radius: 0.4rem; margin: 1rem auto;" onclick="viewProduct('{{ product.productId }}')">
+                                {% endif %}
+
+
+                                <a href="#" style="margin: 0.3rem auto; margin-bottom: 0.1rem; font-weight: bold; text-decoration: none; color: black;">{{ product.productName }}</a>
+
+                                <p style="margin: 0px auto; font-weight: bold">Cost Rs {{ product.productPrice }}</p>
+                                {% if product.isInTheCart %}
+                                    <a id="Product_{{ product.productId }}" onclick="removeFromCart('{{ product.productId }}')" class="btn btn-danger" style="margin: auto; width: 9rem; font-size: 13px;" >Remove from Cart</a>
+                                {% else %}
+                                    <a id="Product_{{ product.productId }}" onclick="addToCart('{{ product.productId }}')" class="btn btn-primary" style="margin: auto; width: 9rem; font-size: 13px;" >Add to Cart</a>
+                                {% endif %}
+                                <!-- <a href="#" class="btn btn-primary" style="margin: auto; width: 9rem;" >Add to Cart</a> -->
+
+                                
+                            </div>
+
+                        {% endfor %}
+                        
+                    </div>
+
+                </div>
+            {% endfor %}
+        {% endif %}
 
             
     </div>
