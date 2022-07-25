@@ -79,19 +79,19 @@
                 <input required type="text" class="form-control input-sm" id="manufacturerNameAddress" name="manufacturerNameAddress" value="" placeholder="XYZ Corporation, New Delhi, India">
             {% endif %}
         </div>
+        
+        <div class="form-check form-switch col-12 mt-4" style="padding-left: 3rem;">
+            <input class="form-check-input ml-1" type="checkbox" id="isRecommended" name="isRecommended">
+            <label class="form-check-label" for="isRecommended">Do You Want myshop to recommend this product to Users?</label>
+        </div>
 
-        <div class="col-12 mt-4">
+        <div class="col-12 mt-4" id="productTagsDiv" style="display: none;">
             <label for="productTags" class="form-label">Product Tags (Seperated by Comma)</label>
             {% if productTags %}
                 <input type="text" class="form-control input-sm" id="productTags" name="productTags" value="{{productTags}}" placeholder="Example : sports,cricket,sports equipments">
             {% else %}
                 <input type="text" class="form-control input-sm" id="productTags" name="productTags" value="" placeholder="Example : sports,cricket,sports equipments">
             {% endif %}
-        </div>
-        
-        <div class="form-check form-switch col-12 mt-4" style="padding-left: 3rem;">
-            <input class="form-check-input ml-1" type="checkbox" id="isRecommended" name="isRecommended">
-            <label class="form-check-label" for="isRecommended">Do You Want myshop to recommend this product to Users?</label>
         </div>
 
         <div class="col-12 mt-4" style="display: none;" id="productRecommendationPriceBlock">
@@ -113,12 +113,15 @@
 
     isRecommended = document.getElementById("isRecommended");
     isRecommended.onchange = ()=>{
-        tag = document.getElementById("productRecommendationPriceBlock");
-        if (tag.style.display == "none"){
-            tag.style.display = "block";
+        productRecommendationPriceBlock = document.getElementById("productRecommendationPriceBlock");
+        productTagsDiv = document.getElementById("productTagsDiv");
+        if (productRecommendationPriceBlock.style.display == "none"){
+            productRecommendationPriceBlock.style.display = "block";
+            productTagsDiv.style.display = "block";
         }
         else{
-            tag.style.display = "none";
+            productRecommendationPriceBlock.style.display = "none";
+            productTagsDiv.style.display = "none";
         }
     };
 

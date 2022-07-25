@@ -43,12 +43,16 @@ class AddProduct(View):
         for key in request.POST:
             productInfo[key] = request.POST[key]
         
+        user = Users.objects.get(pk=request.COOKIES['username'])
         productsFound = Products.objects.filter(productName = request.POST['productName']) # Product Name Validation #
         if len(request.FILES) == 0:
             messages.error(request, "Please upload the product image !!!")
         if len(productsFound) != 0:
             productInfo['productName'] = ""
             messages.error(request, "Product name already exists !!!")
+        if 'isRecommended' in request.POST and user.walletBalance < float(productInfo['recommendationCharges']):
+            productInfo['recommendationCharges'] = ""
+            messages.error(request, "You don't have sufficient balance to sponsor this product.")
         else:
             newProduct = Products(
                 productName = productInfo['productName'],
@@ -59,16 +63,23 @@ class AddProduct(View):
                 manufacturerDetails = productInfo['manufacturerNameAddress'],
                 seller = Users.objects.get(username=request.COOKIES['username']),
                 productImage = request.FILES['productImage'],
-                isRecommended = True if 'isRecommended' in request.POST else False,
+                isRecommended = 'isRecommended' in request.POST and request.POST['isRecommended'].lower() == "on",
                 recommendationAmount = float(request.POST['recommendationCharges']) if 'isRecommended' in request.POST else 0
             )
             newProduct.save()
-            for tag in request.POST['productTags'].split(','):
-                tag = tag.lower().strip()
-                if tag != "":
-                    productTag, created = ProductTags.objects.get_or_create(tagName=tag, defaults={"tagName":tag})
-                    newProduct.tags.add(productTag)
+
+            # Adding tags to the product -- PAID #
+            if 'isRecommended' in request.POST and request.POST['isRecommended'].lower() == "on":
+                user.walletBalance = F('walletBalance') - float(request.POST['recommendationCharges'])
+                user.save()
+                user.refresh_from_db()
+                for tag in request.POST['productTags'].split(','):
+                    tag = tag.lower().strip()
+                    if tag != "":
+                        productTag, created = ProductTags.objects.get_or_create(tagName=tag, defaults={"tagName":tag})
+                        newProduct.tags.add(productTag)
             
+            # Adding default(UNPAID) tags to the product #
             # Making product name as a tag #
             for tag in productInfo['productName'].split(' '):
                 productTag, created = ProductTags.objects.get_or_create(tagName=tag, defaults={"tagName":tag})
