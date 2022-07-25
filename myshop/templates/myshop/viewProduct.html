@@ -4,7 +4,7 @@
         flex-direction: column; 
         margin: 1rem 2rem;
         width: 15rem; 
-        height: 19rem;
+        height: 21.5rem;
         border-radius: 0.7rem;
         box-shadow: 4px 3px 6px 3px rgb(211, 212, 212);
         cursor: pointer;
@@ -142,11 +142,17 @@
                 </div>
 
                 <!-- <a href="#" class="btn btn-primary" style="margin: auto; width: 9rem;" >Add to Cart</a> -->
-                {% if selectedProduct.isInTheCart %}
-                    <a id="Product_{{ selectedProduct.productId }}" onclick="removeFromCart('{{ selectedProduct.productId }}')" class="btn btn-danger" style="margin: auto; width: 9rem; font-size: 13px;" >Remove from Cart</a>
-                {% else %}
-                    <a id="Product_{{ selectedProduct.productId }}" onclick="addToCart('{{ selectedProduct.productId }}')" class="btn btn-primary" style="margin: auto; width: 9rem; font-size: 13px;" >Add to Cart</a>
-                {% endif %}
+
+                <div style="display: flex;">
+
+                    {% if selectedProduct.isInTheCart %}
+                        <a id="Product_{{ selectedProduct.productId }}" onclick="removeFromCart('{{ selectedProduct.productId }}')" class="btn btn-danger" style="margin: auto; width: 9rem; font-size: 13px;" >Remove from Cart</a>
+                    {% else %}
+                        <a id="Product_{{ selectedProduct.productId }}" onclick="addToCart('{{ selectedProduct.productId }}')" class="btn btn-primary" style="margin: auto; width: 9rem; font-size: 13px;" >Add to Cart</a>
+                    {% endif %}
+    
+                    <a href="{% url 'myshop:buynow' selectedProduct.productId %}" class="btn btn-primary" style="margin: auto; width: 9rem; font-size: 13px; margin-top: 0px;" >Buy Now</a>
+                </div>
             </div>
             
         </div>
@@ -184,6 +190,7 @@
                                     <a id="Product_{{ product.productId }}" onclick="addToCart('{{ product.productId }}')" class="btn btn-primary" style="margin: auto; width: 9rem; font-size: 13px;" >Add to Cart</a>
                                 {% endif %}
                                 <!-- <a href="#" class="btn btn-primary" style="margin: auto; width: 9rem;" >Add to Cart</a> -->
+                                <a href="{% url 'myshop:buynow' product.productId %}" class="btn btn-primary" style="margin: auto; width: 9rem; font-size: 13px; margin-top: 0px;" >Buy Now</a>
                             </div>
 
                         {% endif %}

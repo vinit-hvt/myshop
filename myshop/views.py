@@ -1,5 +1,8 @@
 from datetime import datetime
+from email import message
 import django
+from django import views
+from django.db import reset_queries
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.views import View
@@ -359,6 +362,54 @@ class OrderDetailsBill(View):
         })
 
 
+
+
+class BuyNow(View):
+
+    def get(self, request, productId):
+        product = Products.objects.get(pk=productId)
+        userAddresses = Address.objects.filter(person__username = request.COOKIES['username'])
+        return render(request, 'myshop/buyNow.html', context={
+            'product' : product,
+            'userAddresses' : userAddresses
+        })
+    
+
+    def post(self, request, productId):
+        products = Products.objects.filter(pk=request.POST['productId'])
+        user = Users.objects.get(pk=request.COOKIES['username'])
+        if products.count() <= 0:
+            messages.error(request, "Product does not exists.")
+        elif request.POST['address'].lower() == "defaulttext":
+            messages.error(request, "Please select the delivery address.")
+        elif int(request.POST['productQty']) <= 0:
+            messages.error(request, "Product quantity should be greater than one.")
+        elif (int(request.POST['productQty']) * products[0].productPrice) > user.walletBalance:
+            messages.error(request, "Insufficient Wallet Balance.")
+        else:
+            productPurchased = products[0]
+            newCart = Cart(
+                person = user,
+                product = productPurchased,
+                productQty = int(request.POST['productQty'])
+            )
+            newCart.save()
+            newOrder = Orders(
+                totalBillAmount = (int(request.POST['productQty']) * productPurchased.productPrice),
+                deliveryAddress = Address.objects.get(pk=request.POST['address']),
+                user = user
+            )
+            newOrder.save()
+            newCart.order = newOrder
+            newCart.save()
+
+            user.walletBalance = F('walletBalance') - (int(request.POST['productQty']) * productPurchased.productPrice)
+            user.save()
+            user.refresh_from_db()
+            messages.success(request, "Order Placed Successfully.")
+            return HttpResponseRedirect(reverse('myshop:myOrders'))
+        
+        return HttpResponseRedirect(reverse('myshop:buynow', kwargs={'productId':request.POST['productId']}))
 
 
 

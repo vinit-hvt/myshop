@@ -19,5 +19,6 @@ urlpatterns = [
     path('myOrders/cancelOrder/<int:orderId>', views.CancelOrder.as_view(), name='cancelOrder'),
     path('myOrders/orderDetails/products/<int:orderId>', views.OrderDetailsProducts.as_view(), name='orderDetailsProducts'),
     path('myOrders/orderDetails/bill/<int:orderId>', views.OrderDetailsBill.as_view(), name='orderDetailsBill'),
+    path('buynow/<int:productId>', views.BuyNow.as_view(), name='buynow'),
     path('logout/', views.Logout.as_view(), name='logout'),
 ]
