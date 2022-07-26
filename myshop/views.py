@@ -8,7 +8,7 @@ from django.shortcuts import render, get_object_or_404
 from django.views import View
 from django.urls import reverse
 from LoginSignup.models import Address
-from .models import Products, Users, Cart, Orders, ProductTags
+from .models import Products, SearchHistory, Users, Cart, Orders, ProductTags
 from django.contrib import messages
 from django.db.models import Q, F
 from .utils import isProductInTheCart, searchProductWithKeyword, getProductsCategoryWise
@@ -112,7 +112,27 @@ class ViewProducts(View):
 class SearchProducts(View):
 
     def get(self, request):
-        allProducts = searchProductWithKeyword(request.GET['searchKey'], request.COOKIES['username'])
+        searchKey = request.GET['searchKey'].lower()
+        allProducts = searchProductWithKeyword(searchKey, request.COOKIES['username'])
+        # Maintaining Search History #
+        if searchKey != "all":
+            search = SearchHistory.objects.filter(pk=searchKey)
+            if search:
+                search = search[0]
+                search.frequency = F('frequency') + 1
+                search.save()
+                search.refresh_from_db()
+                if not search.users.filter(username=request.COOKIES['username']):
+                    search.users.add( Users.objects.get(pk=request.COOKIES['username']) )
+                    search.save()
+            else:
+                search = SearchHistory(
+                    searchKeyword = searchKey,
+                )
+                search.save()
+                search.users.add( Users.objects.get(pk=request.COOKIES['username']))
+                search.save()
+
         return render(request, 'myshop/viewProducts.html', context={'allProducts':allProducts, 'resultLen':len(allProducts), 'searchKey':request.GET['searchKey']})
 
 
@@ -410,6 +430,22 @@ class BuyNow(View):
             return HttpResponseRedirect(reverse('myshop:myOrders'))
         
         return HttpResponseRedirect(reverse('myshop:buynow', kwargs={'productId':request.POST['productId']}))
+
+
+
+class SuggestSearches(View):
+
+    def get(self, request, searchKey):
+        suggestions = SearchHistory.objects.filter(searchKeyword__icontains = searchKey)
+        if not suggestions.count():
+            suggestions = ProductTags.objects.filter(tagName__icontains = searchKey)
+            suggestions = list(map(lambda tag: tag.tagName, suggestions))
+        else:
+            suggestions = list(map(lambda search: search.searchKeyword, suggestions))
+        
+        return JsonResponse({
+            'searchSuggestions' : suggestions
+        })
 
 
 

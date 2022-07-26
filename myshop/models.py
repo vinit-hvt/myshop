@@ -60,3 +60,10 @@ class Cart(models.Model):
 
     def __repr__(self) -> str:
         return f"{self.product.productName} Added on {self.addedToCartOn}"
+
+
+
+class SearchHistory(models.Model):
+    searchKeyword = models.CharField(primary_key=True, max_length=200, null=False)
+    frequency = models.IntegerField(default=1)
+    users = models.ManyToManyField(Users, null=True)

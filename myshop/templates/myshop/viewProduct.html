@@ -112,7 +112,7 @@
 
             <div class="productImageContainer" style="padding: 2rem 1rem;">
                 {% if selectedProduct.isRecommended %}
-                    <p style="color: orange; font-size: 14px; margin: auto; margin-bottom: 0.5rem;"><strong>Recommended ✓</strong></p>
+                    <p style="color: orange; font-size: 14px; margin: auto; margin-bottom: 0.5rem;"><strong>Sponsored ✓</strong></p>
                 {% endif %}
                 <img src="{{ selectedProduct.productImageUrl }}" alt="Product Image" style="width: 18rem; height: 18rem; border-radius: 0.5rem;">
                 <div style="text-align: center; margin-top: 1rem;">
@@ -174,7 +174,7 @@
                             <!-- Product Box -->
                             <div class="productBox">
                                 {% if product.isRecommended %}
-                                    <p style="color: orange; font-size: 12px; margin: auto; margin-bottom: 0px;"><strong>Recommended ✓</strong></p>
+                                    <p style="color: orange; font-size: 12px; margin: auto; margin-bottom: 0px;"><strong>Sponsored ✓</strong></p>
                                     <img src="{{ product.productImageUrl }}" alt="Product Image" width="160px" height="160px" style="border-radius: 0.4rem; margin: 0.5rem auto;" onclick="viewProduct('{{ product.productId }}')">
                                 {% else %}
                                     <img src="{{ product.productImageUrl }}" alt="Product Image" width="160px" height="160px" style="border-radius: 0.4rem; margin: 1rem auto;" onclick="viewProduct('{{ product.productId }}')">

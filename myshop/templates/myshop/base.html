@@ -10,11 +10,35 @@
     <title></title>
 </head>
 
+<style>
+    .suggestions{
+        background-color: white;
+        cursor: pointer;
+        list-style-type: none;
+        padding: 0.3rem 1rem;
+        border-bottom: 1.5px solid whitesmoke;
+        border-radius: 0.4rem;
+    }
+    .suggestions:hover{
+        background-color: whitesmoke;
+    }
+
+    .searchSuggestionDiv{
+        display: flex;
+        flex-direction: column;
+        background-color: white;
+        border-radius: 0.4rem;
+        box-shadow: 2px 3px 3px 1px rgb(211, 212, 212);
+        padding-top: 0.5rem;
+    }
+
+</style>
+
 <body>
 
     <div class="">
 
-        <nav class="navbar-expand-lg navbar navbar-dark bg-dark">
+        <nav class="navbar-expand-lg navbar navbar-dark bg-dark" style="height: 4.3rem;">
             <div class="container-fluid">
                 <a class="navbar-brand" href="{% url 'myshop:home' %}">myshop</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
@@ -46,13 +70,21 @@
                             <a class="nav-link" href="{% url 'myshop:logout' %}">Logout</a>
                         </li>
                     </ul>
-                    <form class="d-flex" role="search" method="get" action="{% url 'myshop:searchProducts' %}">
-                        {% if searchKey %}
-                            <input class="form-control me-3" type="search" placeholder="Search Products" name="searchKey" aria-label="Search" id="searchKey" value="{{ searchKey }}">
-                        {% else %}
-                            <input class="form-control me-3" type="search" placeholder="Search Products" name="searchKey" aria-label="Search" id="searchKey">
-                        {% endif %}
-                        <button class="btn btn-outline-secondary me-3 text-light" id="search" type="submit">Search</button>
+                    <form autocomplete="off" style="height: 2.3rem; margin-top: 1rem;" class="d-flex" role="search" method="get" action="{% url 'myshop:searchProducts' %}">
+
+                        <div style="display: flex; flex-direction: column; margin-right: 0.9rem;">
+
+                            {% if searchKey %}
+                                <input required class="form-control me-3" type="search" placeholder="Search Products" name="searchKey" aria-label="Search" id="searchKeyword" value="{{ searchKey }}">
+                            {% else %}
+                                <input required class="form-control me-3" type="search" placeholder="Search Products" name="searchKey" aria-label="Search" id="searchKeyword">
+                            {% endif %}
+
+                            <div class="searchSuggestionDiv" id="suggestionContainer" style="display: none;">
+                            </div>
+                        </div>
+                        <button class="btn btn-outline-secondary text-light" id="search" type="submit">Search</button>
+
                     </form>
                 </div>
             </div>
@@ -77,4 +109,59 @@
     {% block content %} {% endblock content %}
 
 </body>
+
+<script>
+
+    function handleSuggestionClick(value){
+        let suggestionContainer = document.getElementById("suggestionContainer");
+        suggestionContainer.innerHTML = "";
+        suggestionContainer.style.display = "none";
+        searchTag.value = value;
+    }
+
+    function showSuggestions(suggestions){
+
+        let suggestionContainer = document.getElementById("suggestionContainer");
+        suggestionContainer.innerHTML = "";
+        suggestionContainer.style.display = "flex";
+        if( suggestions.length ){
+            for(let suggestion of suggestions){
+                let li = document.createElement("li");
+                li.classList.add("suggestions");
+                li.onclick = ()=>{handleSuggestionClick(suggestion)};
+                li.innerText = suggestion
+                suggestionContainer.appendChild(li);
+            }
+        }
+        else{
+            let li = document.createElement("li");
+            li.classList.add("suggestions");
+            li.innerText = "No Search Suggestion"
+            suggestionContainer.appendChild(li);
+        }
+    }
+
+    function suggesstSearches(e){
+
+        let searchKey = e.target.value;
+        if( searchKey.length == 4 || searchKey.length == 6 || searchKey.length >= 8 ){
+            $.ajax({
+                    type:"GET",
+                    url: "/myshop/suggestSearches/" + searchKey,
+                    data:{},
+                    success: data => {
+                        showSuggestions(data['searchSuggestions'])
+                    }
+                }
+            );
+        }
+        else if( searchKey.length == 0 ){
+            handleSuggestionClick("")
+        }
+    }
+    let searchTag = document.getElementById("searchKeyword");
+    searchTag.onkeyup = suggesstSearches;
+
+</script>
+
 </html>
