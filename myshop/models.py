@@ -1,4 +1,4 @@
-from statistics import mode
+from pyexpat import model
 from django.db import models
 from LoginSignup.models import Address, Users
 from datetime import datetime, timedelta
@@ -44,7 +44,7 @@ class Orders(models.Model):
     deliveryAddress = models.ForeignKey(Address, on_delete=models.CASCADE, null=True)
     user = models.ForeignKey(Users, on_delete=models.CASCADE)
     isOrderDelivered = models.BooleanField(default=False)
-    estimatedDeliveryDate = models.DateTimeField(default=getDeliveryDate)
+    estimatedDeliveryDate = models.DateTimeField(null=True)
 
     def __repr__(self) -> str:
         return f"Order Id : {self.orderId}, Order of User : {self.user__username} on {self.orderedOn}"
@@ -67,3 +67,14 @@ class SearchHistory(models.Model):
     searchKeyword = models.CharField(primary_key=True, max_length=200, null=False)
     frequency = models.IntegerField(default=1)
     users = models.ManyToManyField(Users, null=True)
+
+
+
+class MyShopCenters(models.Model):
+    centerId = models.BigAutoField(primary_key=True)
+    city = models.CharField(max_length=20, null=False)
+    state = models.CharField(max_length=20, null=False)
+    zipCode = models.CharField(max_length=10, null=False)
+
+    def __repr__(self) -> str:
+        return f"Center : {self.centerId}, {self.city}, {self.state}, {self.zipCode}"

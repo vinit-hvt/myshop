@@ -1,7 +1,13 @@
 from functools import reduce
-from .models import Products, Users, Cart, ProductTags
+from math import ceil
+from .models import Products, Users, Cart, ProductTags, MyShopCenters
 from django.db.models import Q, F
+from LoginSignup.utils import isNumberValid
+import requests
+from datetime import timedelta
 
+# Global Variables #
+MAX_DISTANCE = None
 
 
 def isProductInTheCart(productId, username):
@@ -55,3 +61,63 @@ def getProductsCategoryWise(productCategory, username):
             allProducts[product['productCategory']] = [product]
 
     return allProducts
+
+
+
+def getDistanceBetweenPincodes(origin, destination):
+    url = "https://api.distancematrix.ai/maps/api/distancematrix/json?"
+    origin = str(origin)
+    destination = str(destination)
+    apiKey = "Ukh8rqcoSPY2mar4pKXAbzcAY5rkc"
+    completeURL = f"{url}origins={origin}&destinations={destination}&key={apiKey}"
+
+    response = requests.get(url=completeURL).json()
+    distanceInKM = str(response['rows'][0]['elements'][0]['distance']['text']).split(" ")[0]
+    return float(distanceInKM)
+
+
+
+def getEstimatedDeliveryDate(order):
+    '''
+        Order Delivery will be done in 2 phases:
+        1 phase : Manufacturer to customer's nearest MyShop's Center.
+        2 phase : Customer's nearest MyShop's center to Customer's address.
+    '''
+    KMsPerDay = 100
+    customerPincode = order.deliveryAddress.zipCode
+    # Finding the nearest myshop's center to customer's address #
+    minDistfrom_CenterToCustomer = None
+    nearestCenter = None
+    for center in MyShopCenters.objects.all():
+        distance = getDistanceBetweenPincodes(center.zipCode, customerPincode)
+        if minDistfrom_CenterToCustomer == None or minDistfrom_CenterToCustomer > distance:
+            minDistfrom_CenterToCustomer, nearestCenter = distance, center  
+        else:
+            minDistfrom_CenterToCustomer, nearestCenter = minDistfrom_CenterToCustomer, nearestCenter
+
+    print(f"Nearest MyShop's Center : {nearestCenter}")
+
+    # Finding the max distance from a manufacturer to the nearest customer's myshop center #
+    maxDistFrom_ManufacturerToCenter = None
+    for cartItem in Cart.objects.filter(order=order):
+        pincode = cartItem.product.manufacturerDetails.split(',')[1].split('-')[1]
+        distance = getDistanceBetweenPincodes(nearestCenter.zipCode, pincode)
+        maxDistFrom_ManufacturerToCenter = distance if maxDistFrom_ManufacturerToCenter == None or maxDistFrom_ManufacturerToCenter < distance else maxDistFrom_ManufacturerToCenter
+
+    totalDeliveryDays = ceil((maxDistFrom_ManufacturerToCenter/KMsPerDay) + (minDistfrom_CenterToCustomer/KMsPerDay))
+    print("\Total Delivery Days => ", totalDeliveryDays)
+    return (order.orderedOn + timedelta(days=totalDeliveryDays))
+
+
+
+def isManufacturerAddressValid(address):
+    lst = address.split(',') # MyCorp, Ajmer-305001, India or MyCorp, Ajmer-305001, Rajasthan, India
+    if len(lst) < 3:
+        return False
+    lst = lst[1].split('-') # Getting the city with pincode #
+    if len(lst) != 2: # Ajmer and 305001 #
+        return False
+    if not isNumberValid(lst[1]): # Validating pincode #
+        return False
+    
+    return True

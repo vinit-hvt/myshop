@@ -11,7 +11,7 @@ from LoginSignup.models import Address
 from .models import Products, SearchHistory, Users, Cart, Orders, ProductTags
 from django.contrib import messages
 from django.db.models import Q, F
-from .utils import isProductInTheCart, searchProductWithKeyword, getProductsCategoryWise
+from .utils import getEstimatedDeliveryDate, isProductInTheCart, searchProductWithKeyword, getProductsCategoryWise, isManufacturerAddressValid
 
 
 # Create your views here.
@@ -56,6 +56,9 @@ class AddProduct(View):
         if 'isRecommended' in request.POST and user.walletBalance < float(productInfo['recommendationCharges']):
             productInfo['recommendationCharges'] = ""
             messages.error(request, "You don't have sufficient balance to sponsor this product.")
+        if not isManufacturerAddressValid(request.POST['manufacturerNameAddress']):
+            productInfo['manufacturerNameAddress'] = ''
+            messages.error(request, "Invalid manufacturer address. Example : Manufacturer Name, City-Pincode, State, Country.")
         else:
             newProduct = Products(
                 productName = productInfo['productName'],
@@ -268,7 +271,8 @@ class PlaceOrder(View):
 
     def post(self, request):
 
-        del request.session['helper'], request.session['helperName']
+        if 'helper' in request.session and 'helperName' in request.session:
+            del request.session['helper'], request.session['helperName']
         user = Users.objects.get(pk=request.COOKIES['username'])
         totalBillAmount = float(request.POST['totalBillAmount'])
         if totalBillAmount > user.walletBalance:
@@ -288,6 +292,8 @@ class PlaceOrder(View):
             user.walletBalance = F('walletBalance') - totalBillAmount
             user.save()
             user.refresh_from_db()
+            newOrder.estimatedDeliveryDate = getEstimatedDeliveryDate(newOrder)
+            newOrder.save()
             messages.success(request, "Order Placed Successfully.")
             return HttpResponseRedirect(reverse('myshop:myOrders'))
 
@@ -426,6 +432,8 @@ class BuyNow(View):
             user.walletBalance = F('walletBalance') - (int(request.POST['productQty']) * productPurchased.productPrice)
             user.save()
             user.refresh_from_db()
+            newOrder.estimatedDeliveryDate = getEstimatedDeliveryDate(newOrder)
+            newOrder.save()
             messages.success(request, "Order Placed Successfully.")
             return HttpResponseRedirect(reverse('myshop:myOrders'))
         
