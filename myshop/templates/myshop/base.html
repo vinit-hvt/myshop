@@ -70,7 +70,7 @@
                             <a class="nav-link" href="{% url 'myshop:logout' %}">Logout</a>
                         </li>
                     </ul>
-                    <form autocomplete="off" style="height: 2.3rem; margin-top: 1rem;" class="d-flex" role="search" method="get" action="{% url 'myshop:searchProducts' %}">
+                    <form id="searchForm" autocomplete="off" style="height: 2.3rem; margin-top: 1rem;" class="d-flex" role="search" method="get" action="{% url 'myshop:searchProducts' %}">
 
                         <div style="display: flex; flex-direction: column; margin-right: 0.9rem;">
 
@@ -117,6 +117,9 @@
         suggestionContainer.innerHTML = "";
         suggestionContainer.style.display = "none";
         searchTag.value = value;
+        if( value != "" ){
+            document.getElementById("searchForm").submit();
+        }
     }
 
     function showSuggestions(suggestions){

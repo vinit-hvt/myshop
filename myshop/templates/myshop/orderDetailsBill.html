@@ -144,6 +144,19 @@
                     <td>-----</td>
                 </tr>
 
+                <!-- Displaying delivery charges -->
+                <tr class="">
+                    <td>--</td>
+                    <td>Delivery Charges</td>
+                    <td>-----</td>
+                    <td>-----</td>
+                    {% if deliveryCharges == 0 %}
+                        <td style="color: green;">Free Delivery</td>
+                    {% else %}
+                        <td>{{ deliveryCharges }}</td>
+                    {% endif %}
+                </tr>
+
                 <!-- For displaying total bill -->
                 <tr class="active-row">
                     <td>--</td>

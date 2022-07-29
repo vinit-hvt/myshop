@@ -45,6 +45,7 @@ class Orders(models.Model):
     user = models.ForeignKey(Users, on_delete=models.CASCADE)
     isOrderDelivered = models.BooleanField(default=False)
     estimatedDeliveryDate = models.DateTimeField(null=True)
+    deliveryCharges = models.IntegerField(default=0, null=False)
 
     def __repr__(self) -> str:
         return f"Order Id : {self.orderId}, Order of User : {self.user__username} on {self.orderedOn}"

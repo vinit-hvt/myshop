@@ -1,5 +1,8 @@
+from concurrent.futures import thread
 from datetime import datetime
-from email import message
+import asyncio
+from math import ceil
+from django.utils.decorators import classonlymethod
 import django
 from django import views
 from django.db import reset_queries
@@ -8,10 +11,11 @@ from django.shortcuts import render, get_object_or_404
 from django.views import View
 from django.urls import reverse
 from LoginSignup.models import Address
-from .models import Products, SearchHistory, Users, Cart, Orders, ProductTags
+from .models import MyShopCenters, Products, SearchHistory, Users, Cart, Orders, ProductTags
 from django.contrib import messages
 from django.db.models import Q, F
-from .utils import getEstimatedDeliveryDate, isProductInTheCart, searchProductWithKeyword, getProductsCategoryWise, isManufacturerAddressValid
+from asgiref.sync import sync_to_async
+from .utils import getEstimatedDeliveryDate, isProductInTheCart, searchProductWithKeyword, getProductsCategoryWise, isManufacturerAddressValid, getDistanceBetweenPincodes, getNearestMyShopCenter
 
 
 # Create your views here.
@@ -273,30 +277,34 @@ class PlaceOrder(View):
 
         if 'helper' in request.session and 'helperName' in request.session:
             del request.session['helper'], request.session['helperName']
+
         user = Users.objects.get(pk=request.COOKIES['username'])
         totalBillAmount = float(request.POST['totalBillAmount'])
         if totalBillAmount > user.walletBalance:
             messages.error(request, "Insufficient Wallet Balance.")
             request.session['helper'] = reverse('userinfo:walletBalance')
             request.session['helperName'] = "Add Money"
-        elif request.POST['address'].lower() == "defaulttext" or len(Address.objects.filter(pk=request.POST['address'])) == 0:
+        elif request.POST['address'].lower() == "defaulttext" or Address.objects.filter(pk=request.POST['address']).count == 0:
             messages.error(request, "Please select the delivery address.")
         else:
             newOrder = Orders(
                 totalBillAmount = totalBillAmount,
                 user = user,
-                deliveryAddress = Address.objects.get(pk=request.POST['address'])
+                deliveryAddress = Address.objects.get(pk=request.POST['address']),
+                deliveryCharges = float(request.POST['deliveryCharges']),
             )
             newOrder.save()
+            
             Cart.objects.filter(person__username = user.username, order__isnull = True).update(order = newOrder)
             user.walletBalance = F('walletBalance') - totalBillAmount
             user.save()
             user.refresh_from_db()
-            newOrder.estimatedDeliveryDate = getEstimatedDeliveryDate(newOrder)
+
+            nearestMyShopCenter = MyShopCenters.objects.get(pk=request.POST['centerId'])
+            newOrder.estimatedDeliveryDate = getEstimatedDeliveryDate(newOrder, nearestMyShopCenter)
             newOrder.save()
             messages.success(request, "Order Placed Successfully.")
             return HttpResponseRedirect(reverse('myshop:myOrders'))
-
         
         return HttpResponseRedirect(reverse('myshop:placeOrder'))
 
@@ -363,7 +371,8 @@ class OrderDetailsBill(View):
 
     def get(self, request, orderId):
         cartItems = Cart.objects.filter(order__orderId = orderId, person__username = request.COOKIES['username']).values()
-        index, totalUnits, sumOfIndividualPrice, totalBillAmount = 1, 0, 0, 0
+        index, totalUnits, sumOfIndividualPrice = 1, 0, 0
+        order = Orders.objects.get(pk=orderId)
 
         for item in cartItems:
             product = Products.objects.get(pk=item['product_id'])
@@ -372,7 +381,6 @@ class OrderDetailsBill(View):
             item['product'] = product 
             totalUnits += item['productQty']
             sumOfIndividualPrice += product.productPrice
-            totalBillAmount += item['total']
             index += 1
 
         if index == 1:
@@ -383,8 +391,9 @@ class OrderDetailsBill(View):
             'orderDetails' : cartItems,
             'totalUnits' : totalUnits,
             'sumOfIndividualPrice' : sumOfIndividualPrice,
-            'totalBillAmount' : totalBillAmount,
-            'orderId' : orderId
+            'totalBillAmount' : order.totalBillAmount,
+            'orderId' : orderId,
+            'deliveryCharges' : order.deliveryCharges
         })
 
 
@@ -421,9 +430,10 @@ class BuyNow(View):
             )
             newCart.save()
             newOrder = Orders(
-                totalBillAmount = (int(request.POST['productQty']) * productPurchased.productPrice),
+                totalBillAmount = (int(request.POST['productQty']) * productPurchased.productPrice) + float(request.POST['deliveryCharges']),
                 deliveryAddress = Address.objects.get(pk=request.POST['address']),
-                user = user
+                user = user,
+                deliveryCharges = float(request.POST['deliveryCharges'])
             )
             newOrder.save()
             newCart.order = newOrder
@@ -432,7 +442,7 @@ class BuyNow(View):
             user.walletBalance = F('walletBalance') - (int(request.POST['productQty']) * productPurchased.productPrice)
             user.save()
             user.refresh_from_db()
-            newOrder.estimatedDeliveryDate = getEstimatedDeliveryDate(newOrder)
+            newOrder.estimatedDeliveryDate = getEstimatedDeliveryDate(newOrder, MyShopCenters.objects.get(pk=request.POST['centerId']))
             newOrder.save()
             messages.success(request, "Order Placed Successfully.")
             return HttpResponseRedirect(reverse('myshop:myOrders'))
@@ -444,7 +454,7 @@ class BuyNow(View):
 class SuggestSearches(View):
 
     def get(self, request, searchKey):
-        suggestions = SearchHistory.objects.filter(searchKeyword__icontains = searchKey)
+        suggestions = SearchHistory.objects.filter(searchKeyword__icontains = searchKey).order_by('-frequency')
         if not suggestions.count():
             suggestions = ProductTags.objects.filter(tagName__icontains = searchKey)
             suggestions = list(map(lambda tag: tag.tagName, suggestions))
@@ -455,6 +465,24 @@ class SuggestSearches(View):
             'searchSuggestions' : suggestions
         })
 
+
+class FindNearestCenter(View):
+
+    MINIMUM_CHARGES = 40
+    CHARGES_PER_KM = 0.3
+
+    def get(self, request):
+        try:
+            address = Address.objects.get(pk=request.GET['addressId'])
+            minDistfrom_CenterToCustomer, nearestCenterId = getNearestMyShopCenter(addressPincode=address.zipCode)
+            deliveryCharges = ceil(minDistfrom_CenterToCustomer * self.CHARGES_PER_KM)
+            return JsonResponse({
+                "deliveryCharges" : deliveryCharges if deliveryCharges >= self.MINIMUM_CHARGES else 0,
+                "centerId" : nearestCenterId
+            })
+        except Exception as e:
+            print("\nException = ", e)
+            return JsonResponse({"deliveryCharges":"0", "centerId":1})
 
 
 class Logout(View):

@@ -83,6 +83,10 @@
         background-color: whitesmoke;
     }
 
+    .hoverClass:hover{
+        background-color: #0a58ca;
+    }
+
 </style>
 
 {% extends 'myshop/base.html' %}
@@ -142,21 +146,32 @@
                     <td>-----</td>
                 </tr>
 
+                <!-- Displaying delivery charges -->
+                <tr class="">
+                    <td>--</td>
+                    <td>Delivery Charges</td>
+                    <td>-----</td>
+                    <td>-----</td>
+                    <td id="deliveryChargesDisplay" >--</td>
+                </tr>
+
                 <!-- For displaying total bill -->
                 <tr class="active-row">
                     <td>--</td>
                     <td>Total</td>
                     <td>Rs. {{ sumOfIndividualPrice }} (Individual Price Sum)</td>
                     <td>{{ totalUnits }} Unit(s)</td>
-                    <td>Rs. {{ totalBillAmount }}</td>
+                    <td id="totalAmount" >Rs. {{ totalBillAmount }}</td>
                 </tr>
             </tbody>
         </table>
         
-
+        <p id="totalProductCharges" hidden>{{ totalBillAmount }}</p>
         <form action="{% url 'myshop:placeOrder' %}" method="post">
             {% csrf_token %}
-            <input type="number" value="{{ totalBillAmount }}" name="totalBillAmount" hidden>
+            <input type="number" value="{{ totalBillAmount }}" name="totalBillAmount" id="totalBillAmount" hidden>
+            <input type="number" value="1" name="centerId" id="centerId" hidden>
+            <input type="number" value="0" name="deliveryCharges" id="deliveryCharges" hidden>
             <div class="OuterDivInput">
                 <select id="address" class="inputTag inputTagDropdown" name="address">
                     <option selected value="defaulttext">Select Your Delivery Address</option>
@@ -169,13 +184,103 @@
             </div>
 
             <div style="display: flex; justify-content: center; margin-top: 2rem;">
-                <button type="submit" class="btn-primary btn">Pay & Place Order</button>
+                <button id="payAndPlaceOrder" type="submit" class="btn-primary btn">Pay & Place Order</button>
             </div>
 
         </form>
 
+        <div id="waitingInfo" style="display: none; margin-top: 1.5rem; justify-content: center;">
+            <span style="margin-right: 1rem; font-weight: bold; font-size: 1.2rem;">Finding the best route to your address ...</span>
+            <div class="spinner-grow text-primary" style="margin-right: 0.5rem;" role="status">
+            </div>
+            <div class="spinner-grow text-danger" style="margin-right: 0.5rem;" role="status">
+            </div>
+            <div class="spinner-grow text-warning" style="margin-right: 0.5rem;" role="status">
+            </div>
+            <div class="spinner-grow text-success" style="margin-right: 0.5rem;" role="status">
+            </div>
+        </div>
+
     </div>
 
 </div>
+
+<script>
+
+    function getNearestCenter(){
+        let address = addressDropdown.options[addressDropdown.selectedIndex].value;
+        if(address != "defaulttext"){
+            waitingInfo.style.display = "flex";
+            payAndPlaceOrder.style.backgroundColor = "#f8f9fa";
+            payAndPlaceOrder.style.color = "black";
+            payAndPlaceOrder.disabled = true;
+            $.ajax({
+                type: "GET",
+                data : {"addressId":address},
+                url: "/myshop/findNearestCenter/",
+                async: true,
+                success: changeDeliveryAddressAndDisplayCharges
+            });
+        }
+        else{
+            changeDeliveryAddressAndDisplayCharges({
+                'deliveryCharges' : 0,
+                'centerId' : 1,
+            });
+            let deliveryChargesDisplay = document.getElementById("deliveryChargesDisplay");
+            deliveryChargesDisplay.innerText = "--";
+            
+        }
+    }
+
+    function changeDeliveryAddressAndDisplayCharges(data){
+
+        let deliveryCharges = document.getElementById("deliveryCharges");
+        let deliveryChargesDisplay = document.getElementById("deliveryChargesDisplay");
+        let totalAmount = document.getElementById("totalAmount");
+        let totalBillAmount = document.getElementById("totalBillAmount");
+        let totalProductCharges = document.getElementById("totalProductCharges");
+        let centerId = document.getElementById("centerId");
+
+        if( data['deliveryCharges'] == 0 ){
+            deliveryChargesDisplay.innerText = "Free Delivery";
+            deliveryChargesDisplay.style.color = "green";
+            totalBillAmount.value = parseFloat(totalProductCharges.innerText);
+            totalAmount.innerText = "Rs. " + totalBillAmount.value;
+        }
+        else{
+            deliveryChargesDisplay.innerText = "Rs. " + data['deliveryCharges'];
+            deliveryChargesDisplay.style.color = "black";
+            totalBillAmount.value = (parseFloat(totalProductCharges.innerText) + data['deliveryCharges']);
+            totalAmount.innerText = "Rs. " + totalBillAmount.value;
+        }
+        deliveryCharges.value = data['deliveryCharges'];
+        centerId.value = data['centerId'];
+        waitingInfo.style.display = "none";
+        payAndPlaceOrder.style.backgroundColor = "#0d6efd";
+        payAndPlaceOrder.style.color = "white";
+        payAndPlaceOrder.disabled = false;
+        payAndPlaceOrder.classList.add("hoverClass");
+    }
+
+    function changeButtonColor(event){
+
+        if( event == "hoverin" ){
+            payAndPlaceOrder.style.backgroundColor = "#0a58ca";
+        }
+        else{
+            payAndPlaceOrder.style.backgroundColor = "#0d6efd";
+        }
+    }
+
+    let addressDropdown = document.getElementById("address");
+    let waitingInfo = document.getElementById("waitingInfo");
+    let payAndPlaceOrder = document.getElementById("payAndPlaceOrder");
+    payAndPlaceOrder.addEventListener('mouseover', ()=>{changeButtonColor("hoverin")});
+    payAndPlaceOrder.addEventListener('mouseout', ()=>{changeButtonColor("hoverout")});
+
+
+    addressDropdown.onchange = getNearestCenter;
+</script>
 
 {% endblock content %}

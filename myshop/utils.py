@@ -1,13 +1,19 @@
-from functools import reduce
 from math import ceil
+import time
+from turtle import distance
+from numpy import NAN, NaN
+from LoginSignup.models import Address
 from .models import Products, Users, Cart, ProductTags, MyShopCenters
 from django.db.models import Q, F
 from LoginSignup.utils import isNumberValid
 import requests
 from datetime import timedelta
+import aiohttp
+import asyncio
+from asgiref.sync import sync_to_async
+from pgeocode import GeoDistance
 
-# Global Variables #
-MAX_DISTANCE = None
+
 
 
 def isProductInTheCart(productId, username):
@@ -48,6 +54,8 @@ def searchProductWithKeyword(searchKey, username):
 
 
 
+
+
 def getProductsCategoryWise(productCategory, username):
     matchingProducts = Products.objects.filter(productCategory__icontains = productCategory).order_by('-recommendationAmount')
     allProducts = {}
@@ -65,48 +73,48 @@ def getProductsCategoryWise(productCategory, username):
 
 
 def getDistanceBetweenPincodes(origin, destination):
-    url = "https://api.distancematrix.ai/maps/api/distancematrix/json?"
-    origin = str(origin)
-    destination = str(destination)
-    apiKey = "Ukh8rqcoSPY2mar4pKXAbzcAY5rkc"
-    completeURL = f"{url}origins={origin}&destinations={destination}&key={apiKey}"
-
-    response = requests.get(url=completeURL).json()
-    distanceInKM = str(response['rows'][0]['elements'][0]['distance']['text']).split(" ")[0]
-    return float(distanceInKM)
+    try:
+        dist = GeoDistance('in')
+        distanceInKM = dist.query_postal_code(origin, destination)
+        return float(distanceInKM)
+    except Exception as e:
+        print("\nException in getDiatnce : ", e)
+        return NaN
 
 
+def getEstimatedDeliveryDate(order, nearestCenter):
 
-def getEstimatedDeliveryDate(order):
-    '''
-        Order Delivery will be done in 2 phases:
-        1 phase : Manufacturer to customer's nearest MyShop's Center.
-        2 phase : Customer's nearest MyShop's center to Customer's address.
-    '''
     KMsPerDay = 100
     customerPincode = order.deliveryAddress.zipCode
-    # Finding the nearest myshop's center to customer's address #
-    minDistfrom_CenterToCustomer = None
-    nearestCenter = None
-    for center in MyShopCenters.objects.all():
-        distance = getDistanceBetweenPincodes(center.zipCode, customerPincode)
-        if minDistfrom_CenterToCustomer == None or minDistfrom_CenterToCustomer > distance:
-            minDistfrom_CenterToCustomer, nearestCenter = distance, center  
-        else:
-            minDistfrom_CenterToCustomer, nearestCenter = minDistfrom_CenterToCustomer, nearestCenter
-
-    print(f"Nearest MyShop's Center : {nearestCenter}")
+    manufacturerAddresses = Cart.objects.filter(order=order).values('product__manufacturerDetails')
+    minDistfrom_CenterToCustomer = getDistanceBetweenPincodes(nearestCenter.zipCode, customerPincode)
+    maxDistFrom_ManufacturerToCenter = None
 
     # Finding the max distance from a manufacturer to the nearest customer's myshop center #
-    maxDistFrom_ManufacturerToCenter = None
-    for cartItem in Cart.objects.filter(order=order):
-        pincode = cartItem.product.manufacturerDetails.split(',')[1].split('-')[1]
-        distance = getDistanceBetweenPincodes(nearestCenter.zipCode, pincode)
+    for address in manufacturerAddresses:
+        pincode = address['product__manufacturerDetails'].split(',')[1].split('-')[1]
+        distance = getDistanceBetweenPincodes(pincode, nearestCenter.zipCode)
         maxDistFrom_ManufacturerToCenter = distance if maxDistFrom_ManufacturerToCenter == None or maxDistFrom_ManufacturerToCenter < distance else maxDistFrom_ManufacturerToCenter
 
     totalDeliveryDays = ceil((maxDistFrom_ManufacturerToCenter/KMsPerDay) + (minDistfrom_CenterToCustomer/KMsPerDay))
-    print("\Total Delivery Days => ", totalDeliveryDays)
     return (order.orderedOn + timedelta(days=totalDeliveryDays))
+    
+
+
+def getNearestMyShopCenter(addressPincode):
+    minDistfrom_CenterToGivenAddress = None
+    nearestCenter = None
+    start = time.time()
+    centers = MyShopCenters.objects.all().values('centerId', 'zipCode')
+
+    for center in centers:
+        distance = getDistanceBetweenPincodes(addressPincode, center['zipCode'])
+        if minDistfrom_CenterToGivenAddress == None or minDistfrom_CenterToGivenAddress > distance:
+            minDistfrom_CenterToGivenAddress, nearestCenter = distance, center['centerId']
+        print(f"\nCenterId : {center['centerId']}, Distance => {distance}")
+
+    print("\nEnded in ", (time.time()-start), "\n")
+    return minDistfrom_CenterToGivenAddress, nearestCenter
 
 
 
