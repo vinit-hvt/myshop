@@ -476,6 +476,7 @@ class FindNearestCenter(View):
             address = Address.objects.get(pk=request.GET['addressId'])
             minDistfrom_CenterToCustomer, nearestCenterId = getNearestMyShopCenter(addressPincode=address.zipCode)
             deliveryCharges = ceil(minDistfrom_CenterToCustomer * self.CHARGES_PER_KM)
+            print("\nDelivery Charge : ",deliveryCharges)
             return JsonResponse({
                 "deliveryCharges" : deliveryCharges if deliveryCharges >= self.MINIMUM_CHARGES else 0,
                 "centerId" : nearestCenterId

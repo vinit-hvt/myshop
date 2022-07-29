@@ -150,18 +150,18 @@
                 <div class="OuterDivInput">
                     <label for="cvvCode">CVV Code</label>
                     {% if cvvCode %}
-                        <input required class="inputTag" type="text" id="cvvCode" name="cvvCode" placeholder="CVV Code" value="{{ cvvCode }}">
+                        <input required class="inputTag" type="password" id="cvvCode" name="cvvCode" placeholder="CVV Code" value="{{ cvvCode }}">
                     {% else %}
-                        <input required class="inputTag" type="text" id="cvvCode" name="cvvCode" placeholder="CVV Code" value="">
+                        <input required class="inputTag" type="password" id="cvvCode" name="cvvCode" placeholder="CVV Code" value="">
                     {% endif %}
                 </div>
 
                 <div class="OuterDivInput">
                     <label for="expiryDate">Expiry Date</label>
                     {% if expiryDate %}
-                        <input required class="inputTag" type="datetime-local" id="expiryDate" name="expiryDate" value="{{ expiryDate }}">
+                        <input required class="inputTag" type="month" id="expiryDate" name="expiryDate" value="{{ expiryDate }}">
                     {% else %}
-                        <input required class="inputTag" type="datetime-local" id="expiryDate" name="expiryDate" value="">
+                        <input required class="inputTag" type="month" id="expiryDate" name="expiryDate" value="">
                     {% endif %}
                 </div>
 

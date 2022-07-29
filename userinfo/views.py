@@ -116,7 +116,7 @@ class WalletBalance(View):
         elif not isNumberValid(request.POST['cvvCode'], numberLenReq=3):
             messages.error(request, "Please enter a valid 3-digit CVV Code")
             details['cvvCode'] = ''
-        elif datetime.now() >= datetime.strptime(request.POST['expiryDate'], '%Y-%m-%dT%H:%M'):
+        elif datetime.now() >= datetime.strptime(request.POST['expiryDate'], '%Y-%m'):
             messages.error(request, "Your card has expired.")
         elif float(request.POST['amount']) <= 0:
             messages.error(request, "Please enter a valid positive amount to add in the wallet.")
