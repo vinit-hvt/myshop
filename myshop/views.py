@@ -1,11 +1,8 @@
-from concurrent.futures import thread
 from datetime import datetime
-import asyncio
 from math import ceil
 from django.utils.decorators import classonlymethod
 import django
 from django import views
-from django.db import reset_queries
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.views import View
@@ -14,7 +11,6 @@ from LoginSignup.models import Address
 from .models import MyShopCenters, Products, SearchHistory, Users, Cart, Orders, ProductTags
 from django.contrib import messages
 from django.db.models import Q, F
-from asgiref.sync import sync_to_async
 from .utils import getEstimatedDeliveryDate, isProductInTheCart, searchProductWithKeyword, getProductsCategoryWise, isManufacturerAddressValid, getDistanceBetweenPincodes, getNearestMyShopCenter
 
 
@@ -315,7 +311,7 @@ class MyOrders(View):
     def get(self, request):
         today = datetime.now()
         Orders.objects.filter(user__username = request.COOKIES['username'], estimatedDeliveryDate__lte = today).update(isOrderDelivered = True)
-        allOrders = Orders.objects.filter(user__username = request.COOKIES['username']).values()
+        allOrders = Orders.objects.filter(user__username = request.COOKIES['username']).order_by('-orderedOn').values()
         print("\n\n", allOrders, "\n")
         for order in allOrders:
             order['deliveryAddress'] = Address.objects.get(pk=order['deliveryAddress_id'])
