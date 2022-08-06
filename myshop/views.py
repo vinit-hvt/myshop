@@ -1,8 +1,5 @@
 from datetime import datetime
 from math import ceil
-from django.utils.decorators import classonlymethod
-import django
-from django import views
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.views import View
@@ -11,7 +8,7 @@ from LoginSignup.models import Address
 from .models import MyShopCenters, Products, SearchHistory, Users, Cart, Orders, ProductTags
 from django.contrib import messages
 from django.db.models import Q, F
-from .utils import getEstimatedDeliveryDate, isProductInTheCart, searchProductWithKeyword, getProductsCategoryWise, isManufacturerAddressValid, getDistanceBetweenPincodes, getNearestMyShopCenter
+from .utils import getEstimatedDeliveryDate, isProductInTheCart, searchProductWithKeyword, getProductsCategoryWise, isManufacturerAddressValid, getNearestMyShopCenter
 
 
 # Create your views here.
