@@ -1,16 +1,11 @@
 from math import ceil
 import time
-from turtle import distance
 from numpy import NAN, NaN
 from LoginSignup.models import Address
 from .models import Products, Users, Cart, ProductTags, MyShopCenters
 from django.db.models import Q, F
 from LoginSignup.utils import isNumberValid
-import requests
 from datetime import timedelta
-import aiohttp
-import asyncio
-from asgiref.sync import sync_to_async
 from pgeocode import GeoDistance
 
 
