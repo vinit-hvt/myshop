@@ -31,6 +31,7 @@ ALLOWED_HOSTS = ['its-myshop.herokuapp.com']
 # Application definition
 
 INSTALLED_APPS = [
+    'whitenoise.runserver_nostatic',
     'userinfo.apps.UserinfoConfig',
     'LoginSignup.apps.LoginsignupConfig',
     'myshop.apps.MyshopConfig',
@@ -44,6 +45,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -52,6 +54,9 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'LoginSignup.authMiddleware.isUserAuthenticated',
 ]
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+
 
 ROOT_URLCONF = 'ecommerce_myshop.urls'
 
@@ -135,4 +140,4 @@ MEDIA_URL = '/media/'
 #     os.path.join(BASE_DIR, 'static'),
 # )
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT=os.path.join(BASE_DIR,'staticfiles')
