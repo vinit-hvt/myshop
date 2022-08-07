@@ -23,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure--0-_^9x=aq*piao1m08kzvjl6xrjkm83*v!ef1ay9un55k1z(n'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['its-myshop.herokuapp.com']
 
@@ -31,7 +31,7 @@ ALLOWED_HOSTS = ['its-myshop.herokuapp.com']
 # Application definition
 
 INSTALLED_APPS = [
-    'whitenoise.runserver_nostatic',
+    # 'whitenoise.runserver_nostatic',
     'userinfo.apps.UserinfoConfig',
     'LoginSignup.apps.LoginsignupConfig',
     'myshop.apps.MyshopConfig',
@@ -45,7 +45,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    # 'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -55,7 +55,7 @@ MIDDLEWARE = [
     'LoginSignup.authMiddleware.isUserAuthenticated',
 ]
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+# STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
 
 
 ROOT_URLCONF = 'ecommerce_myshop.urls'
@@ -124,7 +124,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.0/ref/settings/#default-auto-field
@@ -140,4 +140,4 @@ MEDIA_URL = '/media/'
 #     os.path.join(BASE_DIR, 'static'),
 # )
 
-STATIC_ROOT=os.path.join(BASE_DIR,'staticfiles')
+STATIC_ROOT=os.path.join(BASE_DIR,'static')
