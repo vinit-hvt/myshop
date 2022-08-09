@@ -1,11 +1,13 @@
-from django.http import HttpResponse, HttpResponseRedirect
+from django import views
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.views import View
-from LoginSignup.models import Users, Address
+from LoginSignup.models import UserType, Users, Address, PremiumPlans, PremiumUsers
 from django.contrib import messages
 from LoginSignup.utils import isNumberValid
 from django.urls import reverse
-from datetime import datetime
+from datetime import datetime, timedelta
+from django.db.models import F
 
 # Create your views here.
 
@@ -131,5 +133,59 @@ class WalletBalance(View):
         return render(request, 'userinfo/walletBalance.html', context = details)
 
 
+class PremiumPlan(View):
+    def get(self, request):
+        return render(request, 'userinfo/premiumPlans.html')
 
+
+class BuyPlan(View):
+    def get(self, request, planName):
+        user = Users.objects.get(pk=request.COOKIES['username'])
+        planName = planName.lower()
+
+        if planName == "basic":
+            planSelected, planCost, planValidity = PremiumPlans.ONE_MONTH_PLAN, 299, 30
+        elif planName == "standard":
+            planSelected, planCost, planValidity = PremiumPlans.THREE_MONTH_PLAN, 699, 90
+        elif planName == "special":
+            planSelected, planCost, planValidity = PremiumPlans.ONE_YEAR_PLAN, 1899, 365
+        else:
+            messages.error(request, f"Please select a valid plan.")
+            return HttpResponseRedirect(reverse('userinfo:premiumPlan'))
             
+        if user.userType == 'UserType.PREMIUM':
+            planEnrolled = PremiumUsers.objects.get(user = user).planName
+            messages.error(request, f"You're already enrolled in a Premium Plan")
+            return HttpResponseRedirect(reverse('userinfo:premiumPlan'))
+        elif user.walletBalance < planCost:
+            messages.error(request, "You don't have sufficient wallent balance to buy this plan")
+            return HttpResponseRedirect(reverse('userinfo:premiumPlan'))
+        else:
+            user.userType = UserType.PREMIUM
+            user.walletBalance = user.walletBalance - planCost
+            newPremiumUser = PremiumUsers(
+                planName = planSelected,
+                user = user,
+                endDate = datetime.now() + timedelta(days=planValidity)
+            )
+            newPremiumUser.save()
+            user.save()
+            messages.success(request, "Now you're a MyShop's Premium User")
+            return HttpResponseRedirect(reverse('userinfo:profile'))
+
+
+class RedeemShopyCoins(View):
+    One_Shoppy_Coin_In_RS = 0.01
+    def get(self, request):
+        user = Users.objects.get(pk=request.COOKIES['username'])
+        if user.userType != 'UserType.PREMIUM':
+            messages.error(request, "You need to have a Premium Account to redeem the Shopy Coins")
+        elif user.shopyCoins <= 0:
+            messages.error(request, "You have zero Shopy Coins")
+        else:
+            user.walletBalance = F('walletBalance') + (self.One_Shoppy_Coin_In_RS * F('shopyCoins'))
+            user.shopyCoins = 0
+            user.save()
+            user.refresh_from_db()
+            messages.success(request, "You have successfully redeemed Shopy Coins, (1 Shopy Coin = 0.01 Rs)")
+        return HttpResponseRedirect(reverse('userinfo:profile'))

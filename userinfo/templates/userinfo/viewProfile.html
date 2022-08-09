@@ -17,7 +17,7 @@
         border-radius: 1rem;
         box-shadow: 4px 3px 6px 6px rgb(211, 212, 212);
         width: 46rem;
-        height: 26rem; 
+        height: 28rem; 
         padding-top: 0.5rem;
         margin-top: 0.3rem;
     }
@@ -80,6 +80,35 @@
         border: 1px solid #1e6ce2;
     }
 
+    .extraButton{
+        font-size: 15px;
+        color: white;
+        margin-left: 1rem;
+        border: none;
+        border-radius: 0.5rem;
+        text-decoration: none;
+        padding: 0.6rem 0.4rem;
+    }
+
+    .premiumButton{
+        background-color: #ff9900;
+    }
+
+    .premiumButton:hover{
+        background-color: #f09206;
+        color: white;
+    }
+
+    .redeemButton{
+        background-color: white;
+        color: #1e6ce2;
+        border: 1px solid #1e6ce2;
+    }
+
+    .redeemButton:hover{
+        background-color: whitesmoke;
+    }
+
 </style>
 
 {% extends 'myshop/base.html' %}
@@ -138,12 +167,25 @@
                 <input readonly class="inputTag" type="text" name="walletBalance" id="walletBalance" value="Rs {{ userDetails.walletBalance }}">
             </div>
 
+            <div class="OuterDivInput">
+                <label for="shopyCoins">Shopy Coins</label>
+                <input readonly class="inputTag" type="text" name="shopyCoins" id="shopyCoins" value="{{ userDetails.shopyCoins }} Coins">
+            </div>
+
             <div class="OuterDivInput_File OuterDivInput">
                 <label for="userProfilePhoto">Select Profile</label>
                 <input type="file" name="userProfilePhoto" id="userProfilePhoto" style="margin-left: 1rem;">
             </div>
 
-            <button type="submit" class="btn btn-primary mt-1">Update Profile</button>
+            <div style="display: flex; flex-direction: row;">
+
+                <button type="submit" class="btn btn-primary mt-1">Update Profile</button>
+                {% if userDetails.userType == 'UserType.REGULAR' %}
+                    <a href="{% url 'userinfo:premiumPlan' %}" class="extraButton premiumButton">Upgrade to Premium 👑</a>
+                {% else %}
+                    <a href="{% url 'userinfo:redeemShopyCoins' %}" class="extraButton redeemButton">Redeem Shopy Coins</a>
+                {% endif %}
+            </div>
 
         </form>
 

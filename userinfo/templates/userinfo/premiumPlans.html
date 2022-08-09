@@ -1,0 +1,147 @@
+<style>
+    
+    .outerContainer{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0.5rem;
+        padding: 1rem;
+        height: 80%;
+    }
+
+    .outerPlanContainer{
+        display: flex;
+        flex-direction: row;
+        width: 80%;
+        height: 85%;
+        padding: 1rem;
+        justify-content: space-around;
+    }
+
+    .planContainer{
+
+        display: flex;
+        flex-direction: column;
+        box-shadow: 4px 3px 6px 6px rgb(211, 212, 212);
+        border-radius: 0.8rem;
+        height: 22.3rem;
+    }
+
+    .planFeature{
+        font-size: 13px;
+        list-style: none;
+        margin-top: 0.8rem;
+    }
+
+    .planUpperPart{
+        display: flex; 
+        flex-direction: column; 
+        justify-content: center; 
+        text-align: center; 
+        background-color: whitesmoke;
+        padding: 0.7rem;
+    }
+
+    .planLowerPart{
+        padding: 1rem 0.6rem;
+    }   
+
+    .buyPlanButton{
+        text-decoration: none;
+        cursor: pointer;
+        color: white;
+        background-color: #1e6ce2;
+        padding: 0.4rem 1rem;
+        border-radius: 0.5rem;
+    }
+
+    .buyPlanButton:hover{
+        background-color: #0b5ed7;
+        color: white;
+    }
+
+
+</style>
+
+{% extends 'myshop/base.html' %}
+
+{% block content %}
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+{% load static %}
+<script src="{% static 'CartUtilities.js' %}"></script>
+<script type="text/javascript">
+
+    initializeUtilities();
+
+</script>
+
+
+<div class="outerContainer">
+
+    <div class="outerPlanContainer">
+
+        <div class="planContainer">
+
+            <div class="planUpperPart">
+                <h5 style="margin-top: 0.5rem;">Basic Plan</h5>
+                <h3 style="margin-top: 0.5rem;">₹ 299 / Month</h5>
+            </div>
+
+            <div class="planLowerPart">
+                <li class="planFeature">✔ Extra 5% Off on every product</li>
+                <li class="planFeature">✔ Faster Order Delivery</li>
+                <li class="planFeature">✔ Get Upto 5% Cashback on every order</li>
+                <li class="planFeature">✔ Get 200 Shopy Coins on every order</li>
+            </div>
+
+            <div style="display: flex; justify-content: center; margin-top: 2rem;">
+                <a href="{% url 'userinfo:buyPlan' 'basic' %}" class="buyPlanButton">Buy Plan</a>
+            </div>
+        </div>
+
+        
+        <div class="planContainer">
+
+            <div class="planUpperPart" style="background-color: rgb(255, 242, 242);">
+                <h5 style="margin-top: 0.5rem;">Standard Plan</h5>
+                <h3 style="margin-top: 0.5rem;">₹ 699 / 3 Month</h5>
+            </div>
+
+            <div class="planLowerPart">
+                <li class="planFeature">✔ Extra 8% Off on every product</li>
+                <li class="planFeature">✔ Faster Order Delivery</li>
+                <li class="planFeature">✔ Get Upto 10% Cashback on every order</li>
+                <li class="planFeature">✔ Get 500 Shopy Coins on every order</li>
+            </div>
+
+            <div style="display: flex; justify-content: center; margin-top: 2rem;">
+                <a href="{% url 'userinfo:buyPlan' 'standard' %}" class="buyPlanButton">Buy Plan</a>
+            </div>
+        </div>
+
+        <div class="planContainer">
+
+            <div class="planUpperPart"  style="background-color: rgb(252, 228, 228);">
+                <h5 style="margin-top: 0.5rem;">MyShop-Special Plan</h5>
+                <h3 style="margin-top: 0.5rem;">₹ 1899 / Year</h5>
+            </div>
+
+            <div class="planLowerPart">
+                <li class="planFeature">✔ Extra 10% Off on every product</li>
+                <li class="planFeature">✔ Free Delivery</li>
+                <li class="planFeature">✔ Faster Order Delivery</li>
+                <li class="planFeature">✔ Get Upto 10% Cashback on every order</li>
+                <li class="planFeature">✔ Get 1000 Shopy Coins on every order</li>
+            </div>
+
+            <div style="display: flex; justify-content: center;">
+                <a href="{% url 'userinfo:buyPlan' 'special' %}" class="buyPlanButton">Buy Plan</a>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock content %}
