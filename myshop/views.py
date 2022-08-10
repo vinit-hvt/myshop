@@ -9,7 +9,7 @@ from .models import MyShopCenters, Products, SearchHistory, Users, Cart, Orders,
 from django.contrib import messages
 from django.db.models import Q, F
 from .utils import getCashbackAndShopyCoinsRewarded, getEstimatedDeliveryDate, isProductInTheCart, searchProductWithKeyword, getProductsCategoryWise, isManufacturerAddressValid, getNearestMyShopCenter
-
+from LoginSignup.utils import setCrownSymbol
 
 # Create your views here.
 
@@ -18,6 +18,7 @@ class Home(View):
 
     def get(self, request):
         user = Users.objects.get(pk=request.COOKIES['username'])
+        setCrownSymbol(request, user)
         if user.userType == 'UserType.PREMIUM':
             if PremiumUsers.objects.filter(user=user, endDate__lte=datetime.now()).count():
                 premiumAccount = PremiumUsers.objects.get(user=user)
@@ -176,7 +177,8 @@ class ViewProduct(View):
 class UserCart(View):
 
     def get(self, request):
-        
+
+        setCrownSymbol(request, Users.objects.get(pk=request.COOKIES['username']))
         cartItems = Cart.objects.filter(person__username = request.COOKIES['username'], order__isnull = True)
         return render(request, 'myshop/viewCart.html', context={
             'cartItems' : cartItems,
@@ -249,12 +251,12 @@ class GetCartItemsCount(View):
 class PlaceOrder(View):
 
     def get(self, request):
+        setCrownSymbol(request, Users.objects.get(pk=request.COOKIES['username']))
         cartItems = Cart.objects.filter(person__username = request.COOKIES['username'], order__isnull = True).values()
         userAddresses = Address.objects.filter(person__username = request.COOKIES['username']).values()
         premiumAccount = PremiumUsers.objects.filter(user__username = request.COOKIES['username'])
         planEnrolledIn = premiumAccount[0].planName.split('.')[1].lower() if premiumAccount.count() else "regular"
             
-
         index, totalUnits, sumOfIndividualPrice, totalBillAmount = 1, 0, 0, 0
         # print(cartItems)
         for item in cartItems:
@@ -340,6 +342,8 @@ class MyOrders(View):
     def get(self, request):
         today = datetime.now()
         user = Users.objects.get(pk=request.COOKIES['username'])
+        setCrownSymbol(request, user)
+
         for order in Orders.objects.filter(user=user, estimatedDeliveryDate__lte = today, isOrderDelivered = False):
             cashback = order.cashbackRewarded
             user.walletBalance = F('walletBalance') + cashback

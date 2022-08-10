@@ -7,7 +7,7 @@ from .models import Users, Address
 import bcrypt
 from django.db.models import Q
 from django.contrib import messages
-from .utils import generateRandomString
+from .utils import generateRandomString, setCrownSymbol
 
 
 # Create your views here.
@@ -32,6 +32,7 @@ class Login(View):
             response.set_cookie(key='username', value=username)
             response.set_cookie(key='sessionId', value=sessionId)
             request.session[username] = sessionId
+            setCrownSymbol(request, user[0])
             return response
 
         context = {

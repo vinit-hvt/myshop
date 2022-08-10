@@ -8,7 +8,7 @@ from LoginSignup.utils import isNumberValid
 from django.urls import reverse
 from datetime import datetime, timedelta
 from django.db.models import F, Sum
-
+from LoginSignup.utils import setCrownSymbol
 from myshop.models import Orders
 
 # Create your views here.
@@ -20,6 +20,8 @@ class ProfileDetails(View):
     def get(self, request):
         username = request.COOKIES['username']
         userDetails = Users.objects.get(pk=username)
+        setCrownSymbol(request, userDetails)
+
         cashbackRewarded = Orders.objects.filter(user = userDetails, isOrderDelivered = True).aggregate(sum = Sum('cashbackRewarded'))['sum']
         cashbackRewarded = float(format(cashbackRewarded, '.2f'))
         walletBalance = float(format(userDetails.walletBalance, '.2f'))
@@ -175,6 +177,7 @@ class BuyPlan(View):
             )
             newPremiumUser.save()
             user.save()
+            setCrownSymbol(request, user)
             messages.success(request, "Now you're a MyShop's Premium User")
             return HttpResponseRedirect(reverse('userinfo:profile'))
 

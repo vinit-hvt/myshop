@@ -40,7 +40,7 @@
 
         <nav class="navbar-expand-lg navbar navbar-dark bg-dark" style="height: 4.3rem;">
             <div class="container-fluid">
-                <a class="navbar-brand" href="{% url 'myshop:home' %}">myshop</a>
+                <a class="navbar-brand" href="{% url 'myshop:home' %}">myshop {{ request.session.User_Crown_Symbol }}</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                     data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
                     aria-expanded="false" aria-label="Toggle navigation">
