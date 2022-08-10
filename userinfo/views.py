@@ -7,7 +7,9 @@ from django.contrib import messages
 from LoginSignup.utils import isNumberValid
 from django.urls import reverse
 from datetime import datetime, timedelta
-from django.db.models import F
+from django.db.models import F, Sum
+
+from myshop.models import Orders
 
 # Create your views here.
 
@@ -18,7 +20,10 @@ class ProfileDetails(View):
     def get(self, request):
         username = request.COOKIES['username']
         userDetails = Users.objects.get(pk=username)
-        return render(request, 'userinfo/viewProfile.html', context={'userDetails':userDetails})
+        cashbackRewarded = Orders.objects.filter(user = userDetails, isOrderDelivered = True).aggregate(sum = Sum('cashbackRewarded'))['sum']
+        cashbackRewarded = float(format(cashbackRewarded, '.2f'))
+        walletBalance = float(format(userDetails.walletBalance, '.2f'))
+        return render(request, 'userinfo/viewProfile.html', context={'userDetails':userDetails, 'cashbackRewarded' : cashbackRewarded, 'walletBalance' : walletBalance})
     
     def post(self, request):
         username = request.COOKIES['username']
@@ -175,7 +180,7 @@ class BuyPlan(View):
 
 
 class RedeemShopyCoins(View):
-    One_Shoppy_Coin_In_RS = 0.01
+    One_Shoppy_Coin_In_RS = 0.1
     def get(self, request):
         user = Users.objects.get(pk=request.COOKIES['username'])
         if user.userType != 'UserType.PREMIUM':
@@ -187,5 +192,5 @@ class RedeemShopyCoins(View):
             user.shopyCoins = 0
             user.save()
             user.refresh_from_db()
-            messages.success(request, "You have successfully redeemed Shopy Coins, (1 Shopy Coin = 0.01 Rs)")
+            messages.success(request, "You have successfully redeemed Shopy Coins, (1 Shopy Coin = 0.1 Rs)")
         return HttpResponseRedirect(reverse('userinfo:profile'))

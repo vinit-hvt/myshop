@@ -5,7 +5,7 @@
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        margin: 0.5rem;
+        margin: 0.2rem;
         padding: 0.2rem 1rem;
     }
 
@@ -17,13 +17,12 @@
         border-radius: 1rem;
         box-shadow: 4px 3px 6px 6px rgb(211, 212, 212);
         width: 46rem;
-        height: 28rem; 
+        height: 29.2rem; 
         padding-top: 0.5rem;
-        margin-top: 0.3rem;
     }
 
     .userDetailsForm{
-        margin-top: 0.5rem;
+        margin-top: 0.1rem;
     }
 
     .inputTag{
@@ -42,13 +41,13 @@
     .OuterDivInput{
         display: flex;
         justify-content: space-between;
-        width: 28rem;
+        width: 30rem;
         margin: 0.6rem;
     }
 
     .OuterDivInput_File{
 
-        width: 34.4rem;
+        width: 36.2rem;
         margin: 0.7rem;
     }
 
@@ -61,7 +60,7 @@
     }
 
     .menuButtons{
-        padding: 0.3rem 1rem;
+        padding: 0.2rem 1rem;
         color: white;
         background-color: #1e6ce2;
         cursor: pointer;
@@ -136,7 +135,7 @@
     <div class="userDetailsContainer">
 
         <div class="userProfileImage">
-            <img src="{{ userDetails.userProfileImage.url }}" alt="User Profile Image" style="border-radius: 1.5rem;"  width="90px" height="90px">
+            <img src="{{ userDetails.userProfileImage.url }}" alt="User Profile Image" style="border-radius: 1.5rem;"  width="80px" height="80px">
         </div>
 
         <form class="userDetailsForm" method="post" action="{% url 'userinfo:profile' %}" enctype="multipart/form-data">
@@ -163,8 +162,13 @@
             </div>
 
             <div class="OuterDivInput">
-                <label for="walletBalance">Wallet Balance</label>
-                <input readonly class="inputTag" type="text" name="walletBalance" id="walletBalance" value="Rs {{ userDetails.walletBalance }}">
+                <label for="walletBalance">Wallet Balance <span style="font-size: 13px;">(Including Cashbacks)</span></label>
+                <input readonly class="inputTag" type="text" name="walletBalance" id="walletBalance" value="Rs {{ walletBalance }}">
+            </div>
+
+            <div class="OuterDivInput">
+                <label for="walletBalance">Cashback Rewarded</label>
+                <input readonly class="inputTag" type="text" name="walletBalance" id="walletBalance" value="Rs {{ cashbackRewarded }}">
             </div>
 
             <div class="OuterDivInput">

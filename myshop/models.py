@@ -47,7 +47,11 @@ class Orders(models.Model):
     estimatedDeliveryDate = models.DateTimeField(null=True)
     deliveryCharges = models.IntegerField(default=0, null=False)
     shopyCoinsRewarded = models.IntegerField(default=0)
-    cashbackRewarded = models.IntegerField(default=0)
+    cashbackRewarded = models.FloatField(default=0)
+    orderDiscount = models.FloatField(default=0)
+    deliveryDiscount = models.FloatField(default=0)
+    crownSymbol = models.CharField(max_length=2, default="")
+
 
     def __repr__(self) -> str:
         return f"Order Id : {self.orderId}, Order of User : {self.user__username} on {self.orderedOn}"

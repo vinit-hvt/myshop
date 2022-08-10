@@ -14,7 +14,7 @@
         flex-direction: column;
         border-radius: 1rem;
         /* box-shadow: 2px 2px 3px 3px rgb(211, 212, 212); */
-        width: 52rem;
+        width: 58rem;
         height: 30rem; 
         margin-top: 0.3rem;
         padding: 0.5rem 1rem;
@@ -173,6 +173,38 @@
                     <td id="deliveryChargesDisplay" >--</td>
                 </tr>
 
+
+                <!-- For displaying discount -->
+                <tr class="" id="orderDiscountRow" style="display: none;">
+                    <td>--</td>
+                    {% if planEnrolledIn == 'one_month_plan' %}
+                        <td>Order Discount ♕ (5%)</td>
+                    {% elif planEnrolledIn == 'three_month_plan' %}
+                        <td>Order Discount ♚ (8%)</td>
+                    {% elif planEnrolledIn == 'one_year_plan' %}
+                        <td>Order Discount 👑 (10%)</td>
+                    {% endif %}
+                    <td>-----</td>
+                    <td>-----</td>
+                    <td id="orderDiscount" style="color: red;">--</td>
+                </tr>
+
+                <!-- For displaying discount -->
+                <tr class="" id="deliveryDiscountRow" style="display: none;">
+                    <td>--</td>
+                    {% if planEnrolledIn == 'one_month_plan' %}
+                        <td>Delivery Discount ♕ (5%)</td>
+                    {% elif planEnrolledIn == 'three_month_plan' %}
+                        <td>Delivery Discount ♚ (8%)</td>
+                    {% elif planEnrolledIn == 'one_year_plan' %}
+                        <td>Delivery Discount 👑 (100%)</td>
+                    {% endif %}
+                    <td>-----</td>
+                    <td>-----</td>
+                    <td id="deliveryDiscount" style="color: red;">--</td>
+                </tr>
+
+
                 <!-- For displaying total bill -->
                 <tr class="active-row">
                     <td>--</td>
@@ -184,13 +216,27 @@
             </tbody>
         </table>
         
+        <p id="planEnrolledIn" hidden>{{ planEnrolledIn }}</p>
+
 
         <form action="{% url 'myshop:buynow' product.productId %}" method="post">
             {% csrf_token %}
             <input type="number" id="productId" name="productId" value="{{ product.productId }}" hidden>
             <input type="number" id="productQty" name="productQty" value="1" hidden>
             <input type="number" value="1" name="centerId" id="centerId" hidden>
-            <input type="number" value="0" name="deliveryCharges" id="deliveryCharges" hidden>
+            <input type="number" step="0.01" value="0" name="deliveryCharges" id="deliveryCharges" hidden>
+            <input type="number" step="0.01" value="0" name="deliveryDiscountInput" id="deliveryDiscountInput" hidden>
+            <input type="number" step="0.01" value="0" name="orderDiscountInput" id="orderDiscountInput" hidden>
+            {% if planEnrolledIn == 'one_month_plan' %}
+                <input type="text" value="♕" name="crownSymbol" id="crownSymbol" hidden>
+            {% elif planEnrolledIn == 'three_month_plan' %}
+                <input type="text" value="♚" name="crownSymbol" id="crownSymbol" hidden>
+            {% elif planEnrolledIn == 'one_year_plan' %}
+                <input type="text" value="👑" name="crownSymbol" id="crownSymbol" hidden>
+            {% else %}
+                <input type="text" value="" name="crownSymbol" id="crownSymbol" hidden>
+            {% endif %}
+
             <div class="OuterDivInput">
                 <select id="address" class="inputTag inputTagDropdown" name="address">
                     <option selected value="defaulttext">Select Your Delivery Address</option>
@@ -242,15 +288,26 @@
             let productUnitPrice =  parseFloat(document.getElementById("productUnitPrice").innerText.replace("Rs. ", ""));
             let productQty = document.getElementById("productQty");
             let deliveryCharges = document.getElementById("deliveryCharges");
+            let deliveryDiscountInput = document.getElementById("deliveryDiscountInput");
+            let orderDiscountInput = document.getElementById("orderDiscountInput");
+            let planEnrolledIn = document.getElementById("planEnrolledIn").innerText;
+            let orderDisRate = getDiscountRate("order", planEnrolledIn);
+            let deliveryDisRate = getDiscountRate("delivery", planEnrolledIn);
 
             currUnits += incrementBy;
             units.innerText = totalUnits.innerText = currUnits + " Unit(s)";
-            amount.innerText = "Rs. " + (currUnits * productUnitPrice);
-            totalAmount.innerText = "Rs. " + ((currUnits * productUnitPrice) + parseFloat(deliveryCharges.value));
+            amount.innerText = "Rs. " + ((currUnits * productUnitPrice));
+            let totalCost = (currUnits * productUnitPrice);
+            orderDiscountInput.value = (orderDisRate * totalCost);
+            deliveryDiscountInput.value = (deliveryDisRate * parseFloat(deliveryCharges.value));
+            totalAmount.innerText = "Rs. " + (totalCost + parseFloat(deliveryCharges.value) - orderDiscountInput.value - deliveryDiscountInput.value);
             productQty.value = currUnits;
+            if( planEnrolledIn != "regular" ){
+                document.getElementById("orderDiscountRow").style.display = "";
+                document.getElementById("orderDiscount").innerText = "Rs. " + orderDiscountInput.value;
+            }
         }
     }
-
 
 
     function getNearestCenter(){
@@ -286,16 +343,25 @@
         let centerId = document.getElementById("centerId");
         let productQty = document.getElementById("productQty");
         let productUnitPrice =  parseFloat(document.getElementById("productUnitPrice").innerText.replace("Rs. ", ""));
+        let planEnrolledIn = document.getElementById("planEnrolledIn").innerText;
+        let totalCost = (parseInt(productQty.value) * productUnitPrice);
+        let orderDisRate = getDiscountRate("order", planEnrolledIn);
+        let deliveryDisRate = getDiscountRate("delivery", planEnrolledIn);
+        let orderDis = 0, deliveryDis = 0;
+        document.getElementById("deliveryDiscountRow").style.display = "none";
+
 
         if( data['deliveryCharges'] == 0 ){
             deliveryChargesDisplay.innerText = "Free Delivery";
             deliveryChargesDisplay.style.color = "green";
-            totalAmount.innerText = "Rs. " + (parseInt(productQty.value) * productUnitPrice);
+            orderDis = (totalCost * orderDisRate), deliveryDis = 0;
+            totalAmount.innerText = "Rs. " + (totalCost - orderDis);
         }
         else{
             deliveryChargesDisplay.innerText = "Rs. " + data['deliveryCharges'];
             deliveryChargesDisplay.style.color = "black";
-            totalAmount.innerText = "Rs. " + ((parseInt(productQty.value) * productUnitPrice) + parseFloat(data['deliveryCharges']));
+            orderDis = (totalCost * orderDisRate), deliveryDis = (parseFloat(data['deliveryCharges']) * deliveryDisRate);
+            totalAmount.innerText = "Rs. " + (totalCost + parseFloat(data['deliveryCharges']) - orderDis - deliveryDis);
         }
         deliveryCharges.value = data['deliveryCharges'];
         centerId.value = data['centerId'];
@@ -304,7 +370,57 @@
         payAndPlaceOrder.style.color = "white";
         payAndPlaceOrder.disabled = false;
         payAndPlaceOrder.classList.add("hoverClass");
+
+        if( planEnrolledIn != "regular" ){
+            document.getElementById("orderDiscountRow").style.display = "";
+            document.getElementById("orderDiscount").innerText = "Rs. " + orderDis;
+            if( deliveryDis > 0 ){
+                document.getElementById("deliveryDiscountRow").style.display = "";
+                document.getElementById("deliveryDiscount").innerText = "Rs. " + deliveryDis;
+            }
+            document.getElementById("orderDiscountInput").value = orderDis;
+            document.getElementById("deliveryDiscountInput").value = deliveryDis;
+
+        }
     }
+
+
+    function displayOrderDiscountInitially(){
+        let planEnrolledIn = document.getElementById("planEnrolledIn").innerText;
+        let orderDiscountRow = document.getElementById("orderDiscountRow");
+        let orderDiscount = document.getElementById("orderDiscount");
+        let orderDis = 0;
+        let totalAmount = document.getElementById("totalAmount");
+        let totalCost = parseFloat(totalAmount.innerText.replace("Rs. ", ""))
+        orderDiscountRow.style.display = "none";
+
+        if( planEnrolledIn != "regular" ){
+
+            orderDiscountRow.style.display = "";
+            orderDis = (getDiscountRate("order", planEnrolledIn) * totalCost);
+            orderDiscount.innerText = "Rs. " + orderDis;
+        }
+        totalAmount.innerText = "Rs. " + (totalCost - orderDis);
+        document.getElementById("orderDiscountInput").value = orderDis;
+    }
+
+
+    function getDiscountRate(type, planEnrolledIn){
+
+        if( type == 'delivery' ){
+            if( planEnrolledIn == 'one_month_plan' ) return 0.05;
+            else if( planEnrolledIn == 'three_month_plan' ) return 0.08;
+            else if( planEnrolledIn == 'one_year_plan' ) return 1;
+            else return 0;
+        }
+        else if( type == 'order' ){
+            if( planEnrolledIn == 'one_month_plan' ) return 0.05;
+            else if( planEnrolledIn == 'three_month_plan' ) return 0.08;
+            else if( planEnrolledIn == 'one_year_plan' ) return 0.1;
+            else return 0;
+        }
+    }
+
 
     function changeButtonColor(event){
 
@@ -324,6 +440,7 @@
 
 
     addressDropdown.onchange = getNearestCenter;
+    displayOrderDiscountInitially();
 
 </script>
 

@@ -1,12 +1,14 @@
 from math import ceil
 import time
 from numpy import NAN, NaN
-from LoginSignup.models import Address
+from LoginSignup.models import Address, PremiumUsers
 from .models import Products, Users, Cart, ProductTags, MyShopCenters
 from django.db.models import Q, F
 from LoginSignup.utils import isNumberValid
 from datetime import timedelta
 from pgeocode import GeoDistance
+import random
+from math import floor
 
 
 
@@ -77,7 +79,7 @@ def getDistanceBetweenPincodes(origin, destination):
         return NaN
 
 
-def getEstimatedDeliveryDate(order, nearestCenter):
+def getEstimatedDeliveryDate(order, nearestCenter, userType='regular'):
 
     KMsPerDay = 100
     customerPincode = order.deliveryAddress.zipCode
@@ -92,6 +94,9 @@ def getEstimatedDeliveryDate(order, nearestCenter):
         maxDistFrom_ManufacturerToCenter = distance if maxDistFrom_ManufacturerToCenter == None or maxDistFrom_ManufacturerToCenter < distance else maxDistFrom_ManufacturerToCenter
 
     totalDeliveryDays = ceil((maxDistFrom_ManufacturerToCenter/KMsPerDay) + (minDistfrom_CenterToCustomer/KMsPerDay))
+    if userType != 'regular' and totalDeliveryDays > 1:
+        totalDeliveryDays -= 2 if totalDeliveryDays > 2 else 1
+
     return (order.orderedOn + timedelta(days=totalDeliveryDays))
     
 
@@ -124,3 +129,26 @@ def isManufacturerAddressValid(address):
         return False
     
     return True
+
+
+def getCashbackAndShopyCoinsRewarded(user, totalBillAmount):
+    premiumAccounts = PremiumUsers.objects.filter(user=user)
+    if premiumAccounts:
+        premiumAccount = premiumAccounts[0]
+        cashback, shopyCoins = 0, 0
+        if premiumAccount.planName == 'PremiumPlans.ONE_MONTH_PLAN':
+            cashback = ((random.randint(1, 5))/100*totalBillAmount)
+            shopyCoins = floor(1/100*totalBillAmount)
+        elif premiumAccount.planName == 'PremiumPlans.THREE_MONTH_PLAN':
+            cashback = ((random.randint(1, 8))/100*totalBillAmount)
+            shopyCoins = floor(3/100*totalBillAmount)
+        else:
+            cashback = ((random.randint(1, 10))/100*totalBillAmount)
+            shopyCoins = floor(5/100*totalBillAmount)
+    else:
+        cashback, shopyCoins = 0,0
+    
+    return {
+        'cashback' : float(format(cashback, '.2f')),
+        'shopyCoins' : shopyCoins
+    }

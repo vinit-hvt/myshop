@@ -14,7 +14,7 @@
         flex-direction: column;
         border-radius: 1rem;
         /* box-shadow: 2px 2px 3px 3px rgb(211, 212, 212); */
-        width: 52rem;
+        width: 58rem;
         height: 30rem; 
         margin-top: 0.3rem;
         padding: 0.5rem 1rem;
@@ -153,9 +153,60 @@
                     {% if deliveryCharges == 0 %}
                         <td style="color: green;">Free Delivery</td>
                     {% else %}
-                        <td>{{ deliveryCharges }}</td>
+                        <td>Rs. {{ deliveryCharges }}</td>
                     {% endif %}
                 </tr>
+
+                <!-- {{ userType }} -->
+                {% if userType == 'UserType.PREMIUM' %}
+
+                    <!-- For displaying discount -->
+                    <tr class="">
+                        <td>--</td>
+                        <td>Order Discount {{ crownSymbol }}</td>
+                        <td>-----</td>
+                        <td>-----</td>
+                        <td id="orderDiscount" style="color: red;">Rs. {{ orderDiscount }}</td>
+                    </tr>
+
+                    {% if deliveryCharges > 0 %}
+                        <!-- For displaying discount -->
+                        <tr class="" >
+                            <td>--</td>
+                            <td>Delivery Discount {{ crownSymbol }}</td>
+                            <td>-----</td>
+                            <td>-----</td>
+                            <td id="deliveryDiscount" style="color: red;">Rs. {{ deliveryDiscount }}</td>
+                        </tr>
+                    {% endif %}
+
+                    {% if cashbackRewarded > 0 %}
+                        <!-- For displaying Cashback rewarded -->
+                        <tr class="">
+                            <td>--</td>
+                            {% if isOrderDelivered %}
+                                <td>Cashback Rewarded {{ crownSymbol }}</td>
+                            {% else %}
+                                <td>Cashback Rewarded {{ crownSymbol }} (Pending)</td>
+                            {% endif %}
+                            <td>-----</td>
+                            <td>-----</td>
+                            <td id="deliveryDiscount" style="color: green;">Rs. {{ cashbackRewarded }}</td>
+                        </tr>
+                    {% endif %}
+
+                    <!-- For displaying shopy coins rewarded -->
+                    <tr class="" >
+                        <td>--</td>
+                        <td>Shopy Coins Rewarded {{ crownSymbol }}</td>
+                        <td>-----</td>
+                        <td>-----</td>
+                        <td id="deliveryDiscount" style="color: green;">{{ shopyCoinsRewarded }} Coins</td>
+                    </tr>
+
+
+                {% endif %}
+
 
                 <!-- For displaying total bill -->
                 <tr class="active-row">

@@ -4,11 +4,11 @@ from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, get_object_or_404
 from django.views import View
 from django.urls import reverse
-from LoginSignup.models import Address
+from LoginSignup.models import Address, PremiumUsers, UserType
 from .models import MyShopCenters, Products, SearchHistory, Users, Cart, Orders, ProductTags
 from django.contrib import messages
 from django.db.models import Q, F
-from .utils import getEstimatedDeliveryDate, isProductInTheCart, searchProductWithKeyword, getProductsCategoryWise, isManufacturerAddressValid, getNearestMyShopCenter
+from .utils import getCashbackAndShopyCoinsRewarded, getEstimatedDeliveryDate, isProductInTheCart, searchProductWithKeyword, getProductsCategoryWise, isManufacturerAddressValid, getNearestMyShopCenter
 
 
 # Create your views here.
@@ -17,6 +17,17 @@ from .utils import getEstimatedDeliveryDate, isProductInTheCart, searchProductWi
 class Home(View):
 
     def get(self, request):
+        user = Users.objects.get(pk=request.COOKIES['username'])
+        if user.userType == 'UserType.PREMIUM':
+            if PremiumUsers.objects.filter(user=user, endDate__lte=datetime.now()).count():
+                premiumAccount = PremiumUsers.objects.get(user=user)
+                premiumAccount.delete()
+                user.userType = UserType.REGULAR
+                user.save()
+                if 'planEndWarning' not in request.session:
+                    request.session['planEndWarning'] = True
+                    messages.error(request, "Your Premium Plan has ended.")
+            
         allProducts = {}
         maxLength = 4
         for product in Products.objects.all().order_by('productCategory', '-recommendationAmount').values():
@@ -240,8 +251,12 @@ class PlaceOrder(View):
     def get(self, request):
         cartItems = Cart.objects.filter(person__username = request.COOKIES['username'], order__isnull = True).values()
         userAddresses = Address.objects.filter(person__username = request.COOKIES['username']).values()
+        premiumAccount = PremiumUsers.objects.filter(user__username = request.COOKIES['username'])
+        planEnrolledIn = premiumAccount[0].planName.split('.')[1].lower() if premiumAccount.count() else "regular"
+            
+
         index, totalUnits, sumOfIndividualPrice, totalBillAmount = 1, 0, 0, 0
-        print(cartItems)
+        # print(cartItems)
         for item in cartItems:
             product = Products.objects.get(pk=item['product_id'])
             item['index'] = index
@@ -262,7 +277,8 @@ class PlaceOrder(View):
             'cartItemsCount' : cartItems.count,
             'totalUnits' : totalUnits,
             'sumOfIndividualPrice' : sumOfIndividualPrice,
-            'totalBillAmount' : totalBillAmount
+            'totalBillAmount' : totalBillAmount,
+            "planEnrolledIn" : planEnrolledIn
         })
     
 
@@ -280,23 +296,39 @@ class PlaceOrder(View):
         elif request.POST['address'].lower() == "defaulttext" or Address.objects.filter(pk=request.POST['address']).count == 0:
             messages.error(request, "Please select the delivery address.")
         else:
+            response = getCashbackAndShopyCoinsRewarded(user, totalBillAmount)
+            shopyCoins = response['shopyCoins']
+            cashback = response['cashback']
+
             newOrder = Orders(
-                totalBillAmount = totalBillAmount,
+                totalBillAmount = float(format(totalBillAmount, '.2f')),
                 user = user,
                 deliveryAddress = Address.objects.get(pk=request.POST['address']),
                 deliveryCharges = float(request.POST['deliveryCharges']),
+                orderDiscount = float(request.POST['orderDiscountInput']),
+                deliveryDiscount = float(request.POST['deliveryDiscountInput']),
+                crownSymbol = request.POST['crownSymbol'],
+                cashbackRewarded = cashback,
+                shopyCoinsRewarded = shopyCoins
             )
             newOrder.save()
             
             Cart.objects.filter(person__username = user.username, order__isnull = True).update(order = newOrder)
             user.walletBalance = F('walletBalance') - totalBillAmount
+            user.shopyCoins = F('shopyCoins') + shopyCoins
             user.save()
             user.refresh_from_db()
 
             nearestMyShopCenter = MyShopCenters.objects.get(pk=request.POST['centerId'])
-            newOrder.estimatedDeliveryDate = getEstimatedDeliveryDate(newOrder, nearestMyShopCenter)
+            newOrder.estimatedDeliveryDate = getEstimatedDeliveryDate(newOrder, nearestMyShopCenter, user.userType.split('.')[1].lower())
             newOrder.save()
-            messages.success(request, "Order Placed Successfully.")
+            if user.userType == 'UserType.PREMIUM':
+                if cashback > 0:
+                    messages.success(request, f"Order Placed Successfully. Hurrah you've recieved a cashback of Rs. {cashback} and {shopyCoins} Shopy Coins. Cashback will be credited after order delivery.")
+                else:
+                    messages.success(request, f"Order Placed Successfully. Hurrah you've recieved {shopyCoins} Shopy Coins.")
+            else:
+                messages.success(request, f"Order Placed Successfully.")
             return HttpResponseRedirect(reverse('myshop:myOrders'))
         
         return HttpResponseRedirect(reverse('myshop:placeOrder'))
@@ -307,7 +339,14 @@ class MyOrders(View):
 
     def get(self, request):
         today = datetime.now()
-        Orders.objects.filter(user__username = request.COOKIES['username'], estimatedDeliveryDate__lte = today).update(isOrderDelivered = True)
+        user = Users.objects.get(pk=request.COOKIES['username'])
+        for order in Orders.objects.filter(user=user, estimatedDeliveryDate__lte = today, isOrderDelivered = False):
+            cashback = order.cashbackRewarded
+            user.walletBalance = F('walletBalance') + cashback
+            user.save()
+            user.refresh_from_db()
+            order.isOrderDelivered = True
+            order.save()
         allOrders = Orders.objects.filter(user__username = request.COOKIES['username']).order_by('-orderedOn').values()
         print("\n\n", allOrders, "\n")
         for order in allOrders:
@@ -328,18 +367,21 @@ class CancelOrder(View):
     def get(self, request, orderId):
         try:
             orderDetails = Orders.objects.get(pk = orderId, user__username = request.COOKIES['username'])
-
+            user = Users.objects.get(pk = request.COOKIES['username'])
             # If order is already delivered #
             if orderDetails.isOrderDelivered:
                 messages.error(request, "Order is already delivered.")
             else:
                 # Steps to cancel the order #
                 Cart.objects.filter(order__orderId = orderDetails.orderId).delete() # Remove the products from the Cart Table #
-                Users.objects.filter(pk = request.COOKIES['username']).update(walletBalance = F('walletBalance') + orderDetails.totalBillAmount) # Refunding the order's bill amount to the user's account #
+                Users.objects.filter(pk = request.COOKIES['username']).update(walletBalance = F('walletBalance') + orderDetails.totalBillAmount, shopyCoins = F('shopyCoins') - orderDetails.shopyCoinsRewarded) # Refunding the order's bill amount to the user's account #
+
+                if orderDetails.shopyCoins > 0:
+                    messages.success(request, f"Order is Cancelled. Bill amount is refunded to your account. {orderDetails.shopyCoinsRewarded} Shopy Coins has been taken back.")
+                else:
+                    messages.success(request, f"Order is Cancelled. Bill amount is refunded to your account.")
                 orderDetails.delete() # Deleting order details from the Orders Table #
 
-                messages.success(request, "Order is Cancelled. Bill amount is refunded to your account.")
-             
         except Exception as e:
             print("Exception occured while cancelling the order => ", e)
             messages.error(request, "Order Not Found.")
@@ -385,8 +427,15 @@ class OrderDetailsBill(View):
             'totalUnits' : totalUnits,
             'sumOfIndividualPrice' : sumOfIndividualPrice,
             'totalBillAmount' : order.totalBillAmount,
+            'deliveryCharges' : order.deliveryCharges,
+            'shopyCoinsRewarded' : order.shopyCoinsRewarded,
+            'cashbackRewarded' : order.cashbackRewarded,
+            'orderDiscount' : order.orderDiscount,
+            'deliveryDiscount' : order.deliveryDiscount,
+            'crownSymbol' : order.crownSymbol,
             'orderId' : orderId,
-            'deliveryCharges' : order.deliveryCharges
+            'userType' : Users.objects.get(pk = request.COOKIES['username']).userType,
+            'isOrderDelivered' : order.isOrderDelivered
         })
 
 
@@ -397,9 +446,13 @@ class BuyNow(View):
     def get(self, request, productId):
         product = Products.objects.get(pk=productId)
         userAddresses = Address.objects.filter(person__username = request.COOKIES['username'])
+        premiumAccount = PremiumUsers.objects.filter(user__username = request.COOKIES['username'])
+        planEnrolledIn = premiumAccount[0].planName.split('.')[1].lower() if premiumAccount.count() else "regular"
+
         return render(request, 'myshop/buyNow.html', context={
             'product' : product,
-            'userAddresses' : userAddresses
+            'userAddresses' : userAddresses,
+            'planEnrolledIn' : planEnrolledIn
         })
     
 
@@ -422,22 +475,41 @@ class BuyNow(View):
                 productQty = int(request.POST['productQty'])
             )
             newCart.save()
+            totalBillAmount = (int(request.POST['productQty']) * productPurchased.productPrice) + float(request.POST['deliveryCharges']) - float(request.POST['orderDiscountInput']) - float(request.POST['deliveryDiscountInput'])
+            totalBillAmount = float(format(totalBillAmount, '.2f'))
+            response = getCashbackAndShopyCoinsRewarded(user, totalBillAmount)
+            shopyCoins = response['shopyCoins']
+            cashback = response['cashback']
             newOrder = Orders(
-                totalBillAmount = (int(request.POST['productQty']) * productPurchased.productPrice) + float(request.POST['deliveryCharges']),
+                totalBillAmount = totalBillAmount,
                 deliveryAddress = Address.objects.get(pk=request.POST['address']),
                 user = user,
-                deliveryCharges = float(request.POST['deliveryCharges'])
+                deliveryCharges = float(request.POST['deliveryCharges']),
+                orderDiscount = float(request.POST['orderDiscountInput']),
+                deliveryDiscount = float(request.POST['deliveryDiscountInput']),
+                crownSymbol = request.POST['crownSymbol'],
+                cashbackRewarded = cashback,
+                shopyCoinsRewarded = shopyCoins
             )
             newOrder.save()
             newCart.order = newOrder
             newCart.save()
 
-            user.walletBalance = F('walletBalance') - (int(request.POST['productQty']) * productPurchased.productPrice)
+            user.walletBalance = F('walletBalance') - totalBillAmount
+            user.shopyCoins = F('shopyCoins') + shopyCoins
             user.save()
             user.refresh_from_db()
-            newOrder.estimatedDeliveryDate = getEstimatedDeliveryDate(newOrder, MyShopCenters.objects.get(pk=request.POST['centerId']))
+            newOrder.estimatedDeliveryDate = getEstimatedDeliveryDate(newOrder, MyShopCenters.objects.get(pk=request.POST['centerId']), user.userType.split('.')[1].lower())
             newOrder.save()
-            messages.success(request, "Order Placed Successfully.")
+
+            if user.userType == 'UserType.PREMIUM':
+                if cashback > 0:
+                    messages.success(request, f"Order Placed Successfully. Hurrah you've recieved a cashback of Rs. {cashback} and {shopyCoins} Shopy Coins. Cashback will be credited after order delivery.")
+                else:
+                    messages.success(request, f"Order Placed Successfully. Hurrah you've recieved {shopyCoins} Shopy Coins.")
+            else:
+                messages.success(request, f"Order Placed Successfully.")
+
             return HttpResponseRedirect(reverse('myshop:myOrders'))
         
         return HttpResponseRedirect(reverse('myshop:buynow', kwargs={'productId':request.POST['productId']}))
@@ -461,7 +533,7 @@ class SuggestSearches(View):
 
 class FindNearestCenter(View):
 
-    MINIMUM_CHARGES = 40
+    MINIMUM_CHARGES = 30
     CHARGES_PER_KM = 0.3
 
     def get(self, request):
