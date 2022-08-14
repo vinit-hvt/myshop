@@ -10,6 +10,6 @@ urlpatterns = [
     path('profile/myAddress/removeAddress/<int:addressId>', views.RemoveAddress.as_view(), name='removeAddress'),
     path('profile/walletBalance', views.WalletBalance.as_view(), name='walletBalance'),
     path('premiumPlan', views.PremiumPlan.as_view(), name='premiumPlan'),
-    path('byPlan/<planName>', views.BuyPlan.as_view(), name='buyPlan'),
+    path('buyPlan/<planName>', views.BuyPlan.as_view(), name='buyPlan'),
     path('redeemShopyCoins', views.RedeemShopyCoins.as_view(), name='redeemShopyCoins'),
 ]
