@@ -415,11 +415,11 @@ class OrderDetailsBill(View):
         premiumAccount = PremiumUsers.objects.filter(user = Users.objects.get(pk=request.COOKIES['username']))
         planEnrolledIn = '' if not premiumAccount.count() else premiumAccount[0].planName.split('.')[1].lower()
         if planEnrolledIn == 'one_month_plan':
-            orderDiscountPercentage, deliveryDiscount, shopyCoinsPercentage = "5 %", "5 %", "1 %"
+            orderDiscountPercentage, deliveryDiscountPercentage, shopyCoinsPercentage = "5 %", "5 %", "1 %"
         elif planEnrolledIn == 'three_month_plan':
-            orderDiscountPercentage, deliveryDiscount, shopyCoinsPercentage = "8 %", "8 %", "3 %"
+            orderDiscountPercentage, deliveryDiscountPercentage, shopyCoinsPercentage = "8 %", "8 %", "3 %"
         elif planEnrolledIn == 'one_year_plan':
-            orderDiscountPercentage, deliveryDiscount, shopyCoinsPercentage = "10 %", "100 %", "5 %"
+            orderDiscountPercentage, deliveryDiscountPercentage, shopyCoinsPercentage = "10 %", "100 %", "5 %"
 
         for item in cartItems:
             product = Products.objects.get(pk=item['product_id'])
@@ -449,7 +449,7 @@ class OrderDetailsBill(View):
             'userType' : Users.objects.get(pk = request.COOKIES['username']).userType,
             'isOrderDelivered' : order.isOrderDelivered,
             'orderDiscountPercentage' : orderDiscountPercentage,
-            'deliveryDiscount' : deliveryDiscount,
+            'deliveryDiscountPercentage' : deliveryDiscountPercentage,
             'shopyCoinsPercentage' : shopyCoinsPercentage
         })
 
