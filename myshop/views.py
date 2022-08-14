@@ -412,13 +412,13 @@ class OrderDetailsBill(View):
         cartItems = Cart.objects.filter(order__orderId = orderId, person__username = request.COOKIES['username']).values()
         index, totalUnits, sumOfIndividualPrice = 1, 0, 0
         order = Orders.objects.get(pk=orderId)
-        premiumAccount = PremiumUsers.objects.filter(user = Users.objects.get(pk=request.COOKIES['username']))
-        planEnrolledIn = '' if not premiumAccount.count() else premiumAccount[0].planName.split('.')[1].lower()
-        if planEnrolledIn == 'one_month_plan':
-            orderDiscountPercentage, deliveryDiscountPercentage, shopyCoinsPercentage = "5 %", "5 %", "1 %"
-        elif planEnrolledIn == 'three_month_plan':
+        # premiumAccount = PremiumUsers.objects.filter(user = Users.objects.get(pk=request.COOKIES['username']))
+        # planEnrolledIn = '' if not premiumAccount.count() else premiumAccount[0].planName.split('.')[1].lower()
+        if order.crownSymbol == '♕':
+            orderDiscountPercentage, deliveryDiscountPercentage, shopyCoinsPercentage = "5%", "5%", "1%"
+        elif order.crownSymbol == '♚':
             orderDiscountPercentage, deliveryDiscountPercentage, shopyCoinsPercentage = "8 %", "8 %", "3 %"
-        elif planEnrolledIn == 'one_year_plan':
+        elif order.crownSymbol == '👑':
             orderDiscountPercentage, deliveryDiscountPercentage, shopyCoinsPercentage = "10 %", "100 %", "5 %"
 
         for item in cartItems:
