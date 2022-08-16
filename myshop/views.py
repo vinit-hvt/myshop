@@ -420,6 +420,8 @@ class OrderDetailsBill(View):
             orderDiscountPercentage, deliveryDiscountPercentage, shopyCoinsPercentage = "8%", "8%", "3%"
         elif order.crownSymbol == '👑':
             orderDiscountPercentage, deliveryDiscountPercentage, shopyCoinsPercentage = "10%", "100%", "5%"
+        else:
+            orderDiscountPercentage, deliveryDiscountPercentage, shopyCoinsPercentage = "", "", ""
 
         for item in cartItems:
             product = Products.objects.get(pk=item['product_id'])
