@@ -291,10 +291,12 @@ class PlaceOrder(View):
 
         user = Users.objects.get(pk=request.COOKIES['username'])
         totalBillAmount = float(request.POST['totalBillAmount'])
-        if totalBillAmount > user.walletBalance:
-            messages.error(request, "Insufficient Wallet Balance.")
-            request.session['helper'] = reverse('userinfo:walletBalance')
-            request.session['helperName'] = "Add Money"
+        remainingAmount = totalBillAmount - user.walletBalance
+
+        if remainingAmount > 0:
+            messages.error(request, f"Insufficient Wallet Balance. Available Wallet Balance is Rs. {format(user.walletBalance, '.2f')}")
+            request.session['helper'] = reverse('userinfo:addMoney', args=[format(remainingAmount, '.2f')])
+            request.session['helperName'] = f"Add Money (Rs. {format(remainingAmount, '.2f')})"
         elif request.POST['address'].lower() == "defaulttext" or Address.objects.filter(pk=request.POST['address']).count == 0:
             messages.error(request, "Please select the delivery address.")
         else:
@@ -474,26 +476,36 @@ class BuyNow(View):
     
 
     def post(self, request, productId):
+
+        if 'helper' in request.session and 'helperName' in request.session:
+            del request.session['helper'], request.session['helperName']
+
         products = Products.objects.filter(pk=request.POST['productId'])
         user = Users.objects.get(pk=request.COOKIES['username'])
+
         if products.count() <= 0:
             messages.error(request, "Product does not exists.")
         elif request.POST['address'].lower() == "defaulttext":
             messages.error(request, "Please select the delivery address.")
         elif int(request.POST['productQty']) <= 0:
             messages.error(request, "Product quantity should be greater than one.")
-        elif (int(request.POST['productQty']) * products[0].productPrice) > user.walletBalance:
-            messages.error(request, "Insufficient Wallet Balance.")
+        
+        productPurchased = products[0]
+        totalBillAmount = (int(request.POST['productQty']) * productPurchased.productPrice) + float(request.POST['deliveryCharges']) - float(request.POST['orderDiscountInput']) - float(request.POST['deliveryDiscountInput'])
+        totalBillAmount = float(format(totalBillAmount, '.2f'))
+        remainigAmount = totalBillAmount - user.walletBalance
+
+        if remainigAmount > 0:
+            messages.error(request, f"Insufficient Wallet Balance. Available Wallet Balance is Rs. {format(user.walletBalance, '.2f')}")
+            request.session['helper'] = reverse('userinfo:addMoney', args=[format(remainigAmount, '.2f')])
+            request.session['helperName'] = f"Add Money (Rs. {format(remainigAmount, '.2f')})"
         else:
-            productPurchased = products[0]
             newCart = Cart(
                 person = user,
                 product = productPurchased,
                 productQty = int(request.POST['productQty'])
             )
             newCart.save()
-            totalBillAmount = (int(request.POST['productQty']) * productPurchased.productPrice) + float(request.POST['deliveryCharges']) - float(request.POST['orderDiscountInput']) - float(request.POST['deliveryDiscountInput'])
-            totalBillAmount = float(format(totalBillAmount, '.2f'))
             response = getCashbackAndShopyCoinsRewarded(user, totalBillAmount)
             shopyCoins = response['shopyCoins']
             cashback = response['cashback']

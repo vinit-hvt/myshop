@@ -67,22 +67,25 @@
                             <a class="nav-link" href="{% url 'myshop:logout' %}">Logout</a>
                         </li>
                     </ul>
-                    <form id="searchForm" autocomplete="off" style="height: 2.3rem; margin-top: 1rem;" class="d-flex" role="search" method="get" action="{% url 'myshop:searchProducts' %}">
+                    <div id="searchFormDiv" style="display: none;">
 
-                        <div style="display: flex; flex-direction: column; margin-right: 0.9rem;">
-
-                            {% if searchKey %}
+                        <form id="searchForm" autocomplete="off" style="height: 2.3rem; margin-top: 1rem;" class="d-flex" role="search" method="get" action="{% url 'myshop:searchProducts' %}">
+                            
+                            <div style="display: flex; flex-direction: column; margin-right: 0.9rem;">
+                                
+                                {% if searchKey %}
                                 <input required class="form-control me-3" type="search" placeholder="Search Products" name="searchKey" aria-label="Search" id="searchKeyword" value="{{ searchKey }}">
-                            {% else %}
+                                {% else %}
                                 <input required class="form-control me-3" type="search" placeholder="Search Products" name="searchKey" aria-label="Search" id="searchKeyword">
-                            {% endif %}
-
-                            <div class="searchSuggestionDiv" id="suggestionContainer" style="display: none;">
+                                {% endif %}
+                                
+                                <div class="searchSuggestionDiv" id="suggestionContainer" style="display: none;">
+                                </div>
                             </div>
-                        </div>
-                        <button class="btn btn-outline-secondary text-light" id="search" type="submit">Search</button>
-
-                    </form>
+                            <button class="btn btn-outline-secondary text-light" id="search" type="submit">Search</button>
+                            
+                        </form>
+                    </div>
                 </div>
             </div>
         </nav>
@@ -93,7 +96,7 @@
                 <div class="alert alert-danger mb-0" role="alert">
                     <span>{{ message }}</span>
                     {% if request.session.helper %}
-                        <a href="{{ request.session.helper }}" class="btn btn-primary btn-sm ml-3">{{ request.session.helperName }}</a>
+                        <a href="{{ request.session.helper }}" class="btn btn-primary btn-sm ml-4">{{ request.session.helperName }}</a>
                     {% endif %}
                 </div>
             {% else %}

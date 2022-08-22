@@ -57,11 +57,12 @@
     <script type="text/javascript">
                 
         function viewProduct(productId){
-            url = "https://its-myshop.herokuapp.com/myshop/viewProduct/" + productId;
+            url = "http://127.0.0.1:8000/myshop/viewProduct/" + productId;
             window.open(url, target="_self");
         }
 
         initializeUtilities();
+        document.getElementById("searchFormDiv").style.display = "";
 
     </script>
 
