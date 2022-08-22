@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 
 from pathlib import Path
 import os
+
+from flask import Flask
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -26,6 +28,10 @@ SECRET_KEY = 'django-insecure--0-_^9x=aq*piao1m08kzvjl6xrjkm83*v!ef1ay9un55k1z(n
 DEBUG = False
 
 ALLOWED_HOSTS = ['its-myshop.herokuapp.com']
+
+# For Debugging in Dev Mode. #
+# DEBUG = True
+# ALLOWED_HOSTS = ['its-myshop.herokuapp.com', "127.0.0.1"]
 
 
 # Application definition

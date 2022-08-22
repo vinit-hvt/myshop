@@ -140,6 +140,17 @@ class WalletBalance(View):
         return render(request, 'userinfo/walletBalance.html', context = details)
 
 
+
+class AddMoney(View):
+    def get(self, request, amount):
+        try:
+            amount = float(format(float(amount), '.2f'))
+        except:
+            amount = 0
+        return render(request, 'userinfo/walletBalance.html', context={'amount':amount})
+
+
+
 class PremiumPlan(View):
     def get(self, request):
         return render(request, 'userinfo/premiumPlans.html')

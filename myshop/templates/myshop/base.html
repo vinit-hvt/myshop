@@ -60,29 +60,31 @@
                         <li class="nav-item">
                             <a class="nav-link" id="navElementCart" href="{% url 'myshop:myOrders' %}">My Orders</a>
                         </li>
-                        <li class="nav-item">
+                        <!-- <li class="nav-item">
                             <a class="nav-link" href="{% url 'myshop:addProduct' %}">Add Product</a>
-                        </li>
+                        </li> -->
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'myshop:logout' %}">Logout</a>
                         </li>
                     </ul>
-                    <form id="searchForm" autocomplete="off" style="height: 2.3rem; margin-top: 1rem;" class="d-flex" role="search" method="get" action="{% url 'myshop:searchProducts' %}">
-
-                        <div style="display: flex; flex-direction: column; margin-right: 0.9rem;">
-
-                            {% if searchKey %}
+                    <div id="searchFormDiv" style="display: none;">
+                        <form id="searchForm" autocomplete="off" style="height: 2.3rem; margin-top: 1rem;" class="d-flex" role="search" method="get" action="{% url 'myshop:searchProducts' %}">
+                            
+                            <div style="display: flex; flex-direction: column; margin-right: 0.9rem;">
+                                
+                                {% if searchKey %}
                                 <input required class="form-control me-3" type="search" placeholder="Search Products" name="searchKey" aria-label="Search" id="searchKeyword" value="{{ searchKey }}">
-                            {% else %}
+                                {% else %}
                                 <input required class="form-control me-3" type="search" placeholder="Search Products" name="searchKey" aria-label="Search" id="searchKeyword">
-                            {% endif %}
-
-                            <div class="searchSuggestionDiv" id="suggestionContainer" style="display: none;">
+                                {% endif %}
+                                
+                                <div class="searchSuggestionDiv" id="suggestionContainer" style="display: none;">
+                                </div>
                             </div>
-                        </div>
-                        <button class="btn btn-outline-secondary text-light" id="search" type="submit">Search</button>
-
-                    </form>
+                            <button class="btn btn-outline-secondary text-light" id="search" type="submit">Search</button>
+                            
+                        </form>
+                    </div>
                 </div>
             </div>
         </nav>
