@@ -9,8 +9,14 @@ from datetime import timedelta
 from pgeocode import GeoDistance
 import random
 from math import floor
+from django.core.cache import cache
 
 
+def initializeCacheIfNot(cacheKey, timeout=60*10):
+    if cache.get(cacheKey) == None:
+        # print("Setting cache : ", cacheKey)
+        cache.set(cacheKey, {}, 60*30)
+        # print("Geeting Cache : ", cache.get(cacheKey))
 
 
 def isProductInTheCart(productId, username):
