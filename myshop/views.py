@@ -8,8 +8,9 @@ from LoginSignup.models import Address, PremiumUsers, UserType
 from .models import MyShopCenters, Products, SearchHistory, Users, Cart, Orders, ProductTags
 from django.contrib import messages
 from django.db.models import Q, F
-from .utils import getCashbackAndShopyCoinsRewarded, getEstimatedDeliveryDate, isProductInTheCart, searchProductWithKeyword, getProductsCategoryWise, isManufacturerAddressValid, getNearestMyShopCenter
+from .utils import getCashbackAndShopyCoinsRewarded, getEstimatedDeliveryDate, isProductInTheCart, searchProductWithKeyword, getProductsCategoryWise, isManufacturerAddressValid, getNearestMyShopCenter, initializeCacheIfNot
 from LoginSignup.utils import setCrownSymbol
+from django.core.cache import cache
 
 # Create your views here.
 
@@ -28,19 +29,25 @@ class Home(View):
                 if 'planEndWarning' not in request.session:
                     request.session['planEndWarning'] = True
                     messages.error(request, "Your Premium Plan has ended.")
-            
-        allProducts = {}
-        maxLength = 4
-        for product in Products.objects.all().order_by('productCategory', '-recommendationAmount').values():
-            product['productImageUrl'] = Products.objects.get(pk=product['productId']).productImage.url
-            product['isInTheCart'] = isProductInTheCart(productId=product['productId'], username=request.COOKIES['username'])
-            if product['productCategory'] in  allProducts:
-                if allProducts[product['productCategory']][0] < maxLength:
-                    allProducts[product['productCategory']][1].append(product)
-                    allProducts[product['productCategory']][0] += 1
-            else:
-                allProducts[product['productCategory']] = [1,[product]]
 
+        if cache.get("homePage"):
+            print("----- Data From Cache -----")
+            allProducts = cache.get("homePage")
+        else:
+            allProducts = {}
+            maxLength = 4
+            for product in Products.objects.all().order_by('productCategory', '-recommendationAmount').values():
+                product['productImageUrl'] = Products.objects.get(pk=product['productId']).productImage.url
+                product['isInTheCart'] = isProductInTheCart(productId=product['productId'], username=request.COOKIES['username'])
+                if product['productCategory'] in  allProducts:
+                    if allProducts[product['productCategory']][0] < maxLength:
+                        allProducts[product['productCategory']][1].append(product)
+                        allProducts[product['productCategory']][0] += 1
+                else:
+                    allProducts[product['productCategory']] = [1,[product]]
+
+            cache.set('homePage', allProducts, 60*10)
+            
         return render(request, 'myshop/home.html', context={'allProducts':allProducts})
 
 
@@ -116,16 +123,42 @@ class AddProduct(View):
 class ViewProducts(View):
 
     def get(self, request, searchKey):
-        allProducts = getProductsCategoryWise(searchKey, request.COOKIES['username'])
-        return render(request, 'myshop/viewProducts.html', context={'allProducts':allProducts, 'resultLen':len(allProducts)})
+        # Initializing the viewProduct in the cache if not initialized yet. #
+        initializeCacheIfNot("viewProducts")
+
+        if f"viewProducts_{searchKey}" in cache.get("viewProducts"):
+            print("----- Data From Cache -----")
+            context = cache.get("viewProducts")[f"viewProducts_{searchKey}"]
+        else:
+            allProducts = getProductsCategoryWise(searchKey, request.COOKIES['username'])
+            context = {
+                'allProducts':allProducts,
+                'resultLen':len(allProducts)
+            }
+            cache.set("viewProducts", cache.get('viewProducts') | {f"viewProducts_{searchKey}":context})
+
+        return render(request, 'myshop/viewProducts.html', context=context)
 
 
 
 class SearchProducts(View):
 
+    MINIMUM_FREQUENCY_TO_CACHE_SEARCH = 5
+
     def get(self, request):
         searchKey = request.GET['searchKey'].lower()
-        allProducts = searchProductWithKeyword(searchKey, request.COOKIES['username'])
+
+        # Initializing the viewProduct in the cache if not initialized yet. #
+        initializeCacheIfNot("searchProducts", 60*30)
+
+        if f"searchProducts_{searchKey}" in cache.get("searchProducts"):
+            print("----- Data From Cache -----")
+            allProducts = cache.get("searchProducts")[f"searchProducts_{searchKey}"]
+            isSearchResultSavedInCache = True
+        else:
+            allProducts = searchProductWithKeyword(searchKey, request.COOKIES['username'])
+            isSearchResultSavedInCache = False
+
         # Maintaining Search History #
         if searchKey != "all":
             search = SearchHistory.objects.filter(pk=searchKey)
@@ -144,6 +177,8 @@ class SearchProducts(View):
                 search.save()
                 search.users.add( Users.objects.get(pk=request.COOKIES['username']))
                 search.save()
+            if search.frequency > self.MINIMUM_FREQUENCY_TO_CACHE_SEARCH and not isSearchResultSavedInCache:
+                cache.set("searchProducts", cache.get('searchProducts') | {f"searchProducts_{searchKey}":allProducts})
 
         return render(request, 'myshop/viewProducts.html', context={'allProducts':allProducts, 'resultLen':len(allProducts), 'searchKey':request.GET['searchKey']})
 
@@ -152,25 +187,36 @@ class SearchProducts(View):
 class ViewProduct(View):
 
     def get(self, request, productId):
-        selectedProduct = get_object_or_404(Products, pk=productId) # This is just for verification whether the products exits or not #
-        selectedProduct = Products.objects.filter(pk=productId).values().first()
-        selectedProduct['productImageUrl'] = Products.objects.get(pk=selectedProduct['productId']).productImage.url
-        selectedProduct['isInTheCart'] = isProductInTheCart(productId=selectedProduct['productId'], username=request.COOKIES['username'])
-        selectedProductDescription = list(map(lambda string: string.replace('\r', ''), selectedProduct['productDescription'].split('\n')))
+        
+        # Initializing the viewProduct in the cache if not initialized yet. #
+        initializeCacheIfNot("viewProduct")
 
-        relatedProducts = list()
-        for product in Products.objects.filter(productCategory = selectedProduct['productCategory']).order_by('-recommendationAmount').values():
-            product['productImageUrl'] = Products.objects.get(pk=product['productId']).productImage.url
-            product['isInTheCart'] = isProductInTheCart(productId=product['productId'], username=request.COOKIES['username'])
-            relatedProducts.append(product)
+        if f"viewProduct_{productId}" in cache.get("viewProduct"):
+            print("----- Data From Cache -----")
+            context = cache.get("viewProduct")[f"viewProduct_{productId}"]
+        else:
+            selectedProduct = get_object_or_404(Products, pk=productId) # This is just for verification whether the products exits or not #
+            selectedProduct = Products.objects.filter(pk=productId).values().first()
+            selectedProduct['productImageUrl'] = Products.objects.get(pk=selectedProduct['productId']).productImage.url
+            selectedProduct['isInTheCart'] = isProductInTheCart(productId=selectedProduct['productId'], username=request.COOKIES['username'])
+            selectedProductDescription = list(map(lambda string: string.replace('\r', ''), selectedProduct['productDescription'].split('\n')))
 
-        productCategory = selectedProduct['productCategory']
-        return render(request, 'myshop/viewProduct.html', context={
-            'selectedProduct' : selectedProduct,
-            'relatedProducts' : relatedProducts,
-            'selectedProductDescription' : selectedProductDescription,
-            'productCategory' : productCategory
-        })
+            relatedProducts = list()
+            for product in Products.objects.filter(productCategory = selectedProduct['productCategory']).order_by('-recommendationAmount').values():
+                product['productImageUrl'] = Products.objects.get(pk=product['productId']).productImage.url
+                product['isInTheCart'] = isProductInTheCart(productId=product['productId'], username=request.COOKIES['username'])
+                relatedProducts.append(product)
+
+            productCategory = selectedProduct['productCategory']
+            context = {
+                'selectedProduct' : selectedProduct,
+                'relatedProducts' : relatedProducts,
+                'selectedProductDescription' : selectedProductDescription,
+                'productCategory' : productCategory
+            }
+            cache.set("viewProduct", cache.get('viewProduct') | {f"viewProduct_{productId}":context})
+
+        return render(request, 'myshop/viewProduct.html', context=context)
 
 
 
@@ -546,16 +592,28 @@ class BuyNow(View):
 class SuggestSearches(View):
 
     def get(self, request, searchKey):
-        suggestions = SearchHistory.objects.filter(searchKeyword__icontains = searchKey).order_by('-frequency')
-        if not suggestions.count():
-            suggestions = ProductTags.objects.filter(tagName__icontains = searchKey)
-            suggestions = list(map(lambda tag: tag.tagName, suggestions))
+
+        searchKey = searchKey.lower()
+
+        # Initializing the viewProduct in the cache if not initialized yet. #
+        initializeCacheIfNot("suggestSearches")
+
+        if f"suggestSearches_{searchKey}" in cache.get("suggestSearches"):
+            print("----- Data From Cache -----")
+            response = cache.get("suggestSearches")[f"suggestSearches_{searchKey}"]
         else:
-            suggestions = list(map(lambda search: search.searchKeyword, suggestions))
-        
-        return JsonResponse({
-            'searchSuggestions' : suggestions
-        })
+            suggestions = SearchHistory.objects.filter(searchKeyword__contains = searchKey).order_by('-frequency')
+            if not suggestions.count():
+                suggestions = ProductTags.objects.filter(tagName__contains = searchKey)
+                suggestions = list(map(lambda tag: tag.tagName, suggestions))
+            else:
+                suggestions = list(map(lambda search: search.searchKeyword, suggestions))
+            response = {
+                'searchSuggestions' : suggestions
+            }
+            cache.set("suggestSearches", cache.get('suggestSearches') | {f"suggestSearches_{searchKey}":response})
+
+        return JsonResponse(response)
 
 
 class FindNearestCenter(View):
@@ -564,18 +622,30 @@ class FindNearestCenter(View):
     CHARGES_PER_KM = 0.3
 
     def get(self, request):
-        try:
-            address = Address.objects.get(pk=request.GET['addressId'])
-            minDistfrom_CenterToCustomer, nearestCenterId = getNearestMyShopCenter(addressPincode=address.zipCode)
-            deliveryCharges = ceil(minDistfrom_CenterToCustomer * self.CHARGES_PER_KM)
-            print("\nDelivery Charge : ",deliveryCharges)
-            return JsonResponse({
-                "deliveryCharges" : deliveryCharges if deliveryCharges >= self.MINIMUM_CHARGES else 0,
-                "centerId" : nearestCenterId
-            })
-        except Exception as e:
-            print("\nException = ", e)
-            return JsonResponse({"deliveryCharges":"0", "centerId":1})
+
+        # Initializing the viewProduct in the cache if not initialized yet. #
+        initializeCacheIfNot("findNearestCenter")
+
+        if f"findNearestCenter_{request.GET['addressId']}" in cache.get("findNearestCenter"):
+            print("----- Data From Cache -----")
+            response = cache.get("findNearestCenter")[f"findNearestCenter_{request.GET['addressId']}"]
+        else:
+            try:
+                address = Address.objects.get(pk=request.GET['addressId'])
+                minDistfrom_CenterToCustomer, nearestCenterId = getNearestMyShopCenter(addressPincode=address.zipCode)
+                deliveryCharges = ceil(minDistfrom_CenterToCustomer * self.CHARGES_PER_KM)
+                print("\nDelivery Charge : ",deliveryCharges)
+                response = {
+                    "deliveryCharges" : deliveryCharges if deliveryCharges >= self.MINIMUM_CHARGES else 0,
+                    "centerId" : nearestCenterId
+                }
+            except Exception as e:
+                print("\nException = ", e)
+                response = {"deliveryCharges":"0", "centerId":1}
+
+            cache.set("findNearestCenter", cache.get('findNearestCenter') | {f"findNearestCenter_{request.GET['addressId']}":response})
+
+        return JsonResponse(response)
 
 
 class Logout(View):
@@ -586,5 +656,3 @@ class Logout(View):
         response.delete_cookie(key='username')
         response.delete_cookie(key='sessionId')
         return response
-
-
